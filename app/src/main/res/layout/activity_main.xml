@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
+    android:background="#000000"
+    android:fitsSystemWindows="true">
 
     <TextView
         android:layout_width="match_parent"
@@ -23,44 +25,114 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="32dp">
+        android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:text="awlqy"
-            android:textColor="#22D3EE"
-            android:textSize="48sp"
-            android:textStyle="bold"/>
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="#000000"
+            app:title="awlqy"
+            app:titleTextColor="#22D3EE"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:fontFamily="monospace"
-            android:text="@string/app_tagline"
-            android:textColor="#64748B"
-            android:textSize="13sp"/>
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:background="#0A0E14"
+            android:scrollbars="none">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:fontFamily="monospace"
-            android:text="PHASE 1 · Skeleton Ready"
-            android:textColor="#4ADE80"
-            android:textSize="12sp"/>
+            <LinearLayout
+                android:id="@+id/sessionTabs"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"/>
+        </HorizontalScrollView>
 
-        <TextView
-            android:layout_width="wrap_content"
+        <ScrollView
+            android:id="@+id/consoleScroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#000000"
+            android:fillViewport="true"
+            android:padding="8dp"
+            android:scrollbars="vertical">
+
+            <TextView
+                android:id="@+id/consoleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:text=""
+                android:textColor="#E2E8F0"
+                android:textIsSelectable="true"
+                android:textSize="12sp"/>
+        </ScrollView>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:fontFamily="monospace"
-            android:text="المطوّر: حسين الخلاقي"
-            android:textColor="#94A3B8"
-            android:textSize="12sp"/>
+            android:background="#0A0E14"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/accessoryBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="4dp"/>
+        </HorizontalScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#0A0E14"
+            android:orientation="horizontal"
+            android:padding="6dp">
+
+            <TextView
+                android:id="@+id/promptLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:fontFamily="monospace"
+                android:paddingEnd="6dp"
+                android:text="awlqy@android:~$ "
+                android:textColor="#4ADE80"
+                android:textSize="12sp"/>
+
+            <EditText
+                android:id="@+id/inputEdit"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="#1E293B"
+                android:fontFamily="monospace"
+                android:hint="اكتب أمراً…"
+                android:imeOptions="actionSend|flagNoFullscreen"
+                android:inputType="text|textNoSuggestions|textVisiblePassword|textMultiLine"
+                android:maxLines="3"
+                android:padding="10dp"
+                android:textColor="#E2E8F0"
+                android:textColorHint="#64748B"
+                android:textSize="12sp"/>
+
+            <Button
+                android:id="@+id/runButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:backgroundTint="#22D3EE"
+                android:fontFamily="monospace"
+                android:minWidth="0dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="RUN"
+                android:textColor="#000000"/>
+        </LinearLayout>
     </LinearLayout>
 </FrameLayout>

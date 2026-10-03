@@ -1,3 +1,163 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# ─────────────────────────────────────────────────────────────
+#  awlqy · terminal-ui.sh — Terminal UI كامل في ملف واحد
+# ─────────────────────────────────────────────────────────────
+set -euo pipefail
+cd "$(dirname "$0")"
+
+echo "▶ [terminal-ui] كتابة الملفين..."
+
+mkdir -p app/src/main/java/com/awlqy/terminal
+mkdir -p app/src/main/res/layout
+
+# ═════════════════════════════════════════════════════════════
+# 1. activity_main.xml
+# ═════════════════════════════════════════════════════════════
+cat > app/src/main/res/layout/activity_main.xml <<'XML_MAIN'
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:fitsSystemWindows="true">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0.05"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:letterSpacing="0.25"
+        android:shadowColor="#22D3EE"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:shadowRadius="30"
+        android:text="Q · W"
+        android:textColor="#22D3EE"
+        android:textSize="120sp"
+        android:textStyle="bold"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="#000000"
+            app:title="awlqy"
+            app:titleTextColor="#22D3EE"/>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:background="#0A0E14"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/sessionTabs"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"/>
+        </HorizontalScrollView>
+
+        <ScrollView
+            android:id="@+id/consoleScroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#000000"
+            android:fillViewport="true"
+            android:padding="8dp"
+            android:scrollbars="vertical">
+
+            <TextView
+                android:id="@+id/consoleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:text=""
+                android:textColor="#E2E8F0"
+                android:textIsSelectable="true"
+                android:textSize="12sp"/>
+        </ScrollView>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#0A0E14"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/accessoryBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="4dp"/>
+        </HorizontalScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#0A0E14"
+            android:orientation="horizontal"
+            android:padding="6dp">
+
+            <TextView
+                android:id="@+id/promptLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:fontFamily="monospace"
+                android:paddingEnd="6dp"
+                android:text="awlqy@android:~$ "
+                android:textColor="#4ADE80"
+                android:textSize="12sp"/>
+
+            <EditText
+                android:id="@+id/inputEdit"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="#1E293B"
+                android:fontFamily="monospace"
+                android:hint="اكتب أمراً…"
+                android:imeOptions="actionSend|flagNoFullscreen"
+                android:inputType="text|textNoSuggestions|textVisiblePassword|textMultiLine"
+                android:maxLines="3"
+                android:padding="10dp"
+                android:textColor="#E2E8F0"
+                android:textColorHint="#64748B"
+                android:textSize="12sp"/>
+
+            <Button
+                android:id="@+id/runButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:backgroundTint="#22D3EE"
+                android:fontFamily="monospace"
+                android:minWidth="0dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="RUN"
+                android:textColor="#000000"/>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>
+XML_MAIN
+
+# ═════════════════════════════════════════════════════════════
+# 2. MainActivity.kt
+# ═════════════════════════════════════════════════════════════
+cat > app/src/main/java/com/awlqy/terminal/MainActivity.kt <<'KOT_MAIN'
 package com.awlqy.terminal
 
 import android.content.Context
@@ -531,3 +691,22 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 }
+KOT_MAIN
+
+echo ""
+echo "▶ [terminal-ui] التحقق:"
+echo "  layout : $(wc -l < app/src/main/res/layout/activity_main.xml) سطر"
+echo "  kotlin : $(wc -l < app/src/main/java/com/awlqy/terminal/MainActivity.kt) سطر"
+echo ""
+echo "▶ [terminal-ui] أول سطر من MainActivity.kt:"
+head -n 1 app/src/main/java/com/awlqy/terminal/MainActivity.kt
+echo ""
+echo "▶ [terminal-ui] لا وجود لـ ViewPager2 / Fragment / Service:"
+grep -c "ViewPager2\|Fragment\|TerminalService" \
+    app/src/main/java/com/awlqy/terminal/MainActivity.kt || echo "  نظيف"
+echo ""
+echo "✔ [terminal-ui] انتهى."
+echo ""
+echo "   git add -A"
+echo "   git commit -m 'phase-2: full interactive terminal UI'"
+echo "   git push"
