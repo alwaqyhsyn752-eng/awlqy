@@ -1,3 +1,15 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -euo pipefail
+cd "$(dirname "$0")"
+
+echo "▶ [fix-main] أول سطرين من الملف الحالي:"
+head -n 3 app/src/main/java/com/awlqy/terminal/MainActivity.kt
+echo ""
+
+echo "▶ [fix-main] إعادة كتابة MainActivity.kt نظيفة"
+
+# نستخدم EOF بدون شرطة (تحتاج أن يكون السطر الأخير بدون محتوى زائد)
+cat > app/src/main/java/com/awlqy/terminal/MainActivity.kt <<'KOTLIN_EOF'
 package com.awlqy.terminal
 
 import android.content.pm.PackageManager
@@ -291,3 +303,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
+KOTLIN_EOF
+
+echo "▶ [fix-main] تحقق من السطور الثلاثة الأولى:"
+head -n 3 app/src/main/java/com/awlqy/terminal/MainActivity.kt
+echo ""
+echo "▶ [fix-main] عدد الأسطر:"
+wc -l app/src/main/java/com/awlqy/terminal/MainActivity.kt
+echo ""
+echo "▶ [fix-main] تنظيف أي \\r قديم:"
+sed -i 's/\r$//' app/src/main/java/com/awlqy/terminal/MainActivity.kt
+echo "✔ تم"
+echo ""
+echo "الخطوة التالية:"
+echo "  git add -A"
+echo "  git commit -m 'fix: clean MainActivity.kt'"
+echo "  git push"
