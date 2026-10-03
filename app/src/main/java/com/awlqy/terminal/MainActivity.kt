@@ -10,7 +10,6 @@ import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -30,14 +29,8 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
     private val buffers = HashMap<String, TerminalBuffer>()
     private var activeIdx = 0
 
-    // Modifier state
     private var ctrlLatched = false
     private var altLatched = false
-
-    // Widgets
-    private lateinit var ctrlButton: MaterialButton
-    private lateinit var altButton: MaterialButton
-    private var pendingInput = StringBuilder()
     private var suppressInput = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,9 +57,8 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
 
     private fun newSession() {
         val home = File(filesDir, "home").apply { mkdirs() }
-        val name = "session-${sessions.size + 1}"
         val s = TerminalSession(
-            name = name,
+            name = "session-${sessions.size + 1}",
             shellPath = "/system/bin/sh",
             cwd = home,
             rows = 24,
@@ -82,14 +74,10 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
     }
 
     private fun closeCurrent() {
-        if (sessions.size <= 1) {
-            toast("لا يمكن إغلاق الجلسة الأخيرة")
-            return
-        }
-        val idx = activeIdx
-        val s = sessions[idx]
+        if (sessions.size <= 1) { toast("لا يمكن إغلاق الجلسة الأخيرة"); return }
+        val s = sessions[activeIdx]
         s.stop()
-        sessions.removeAt(idx)
+        sessions.removeAt(activeIdx)
         buffers.remove(s.name)
         if (activeIdx >= sessions.size) activeIdx = sessions.size - 1
         renderTabs()
@@ -173,12 +161,11 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
         onOutput(session, "\n[session exited: $exitCode]\n")
     }
 
-    // ─── Accessory bar (3 rows) ──────────────────────────
+    // ─── Accessory bar ──────────────────────────────────
 
     private fun buildAccessoryBar() {
         val container = binding.accessoryContainer
 
-        // Row 1: KEYBOARD | NEW SESSION
         val row1 = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LinearLayout.LayoutParams(
@@ -187,11 +174,10 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
             )
         }
         row1.addView(makeKey("KEYBOARD", 0xFF1E293B.toInt()) { toggleSoftKeyboard() })
-        row1.addView(makeKey("NEW SESSION", 0xFF4ADE80.toInt()) { newSession() })
+        row1.addView(makeKey("NEW", 0xFF4ADE80.toInt()) { newSession() })
         row1.addView(makeKey("CLOSE", 0xFFEF4444.toInt()) { closeCurrent() })
         container.addView(row1)
 
-        // Row 2: ESC | ≡ | ↕ | HOME | ↑ | END | PGUP
         val row2 = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LinearLayout.LayoutParams(
@@ -199,17 +185,16 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
         }
-        row2.addView(makeKey("ESC") { sendBytes(byteArrayOf(0x1B)) })
-        row2.addView(makeKey("TAB") { sendBytes(byteArrayOf(0x09)) })
+        row2.addView(makeKey("ESC")  { sendBytes(byteArrayOf(0x1B)) })
+        row2.addView(makeKey("TAB")  { sendBytes(byteArrayOf(0x09)) })
         row2.addView(makeKey("CTRL", 0xFF1E293B.toInt()) { toggleCtrl() })
         row2.addView(makeKey("ALT",  0xFF1E293B.toInt()) { toggleAlt() })
         row2.addView(makeKey("HOME") { sendSeq("\u001B[H") })
-        row2.addView(makeKey("↑") { sendSeq("\u001B[A") })
-        row2.addView(makeKey("END") { sendSeq("\u001B[F") })
+        row2.addView(makeKey("UP")   { sendSeq("\u001B[A") })
+        row2.addView(makeKey("END")  { sendSeq("\u001B[F") })
         row2.addView(makeKey("PGUP") { sendSeq("\u001B[5~") })
         container.addView(row2)
 
-        // Row 3: ↹ | | | ← | ↓ | → | PGDN | MENU
         val row3 = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LinearLayout.LayoutParams(
@@ -217,12 +202,12 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
         }
-        row3.addView(makeKey("|") { sendSeq("|") })
-        row3.addView(makeKey("/") { sendSeq("/") })
-        row3.addView(makeKey("-") { sendSeq("-") })
-        row3.addView(makeKey("←") { sendSeq("\u001B[D") })
-        row3.addView(makeKey("↓") { sendSeq("\u001B[B") })
-        row3.addView(makeKey("→") { sendSeq("\u001B[C") })
+        row3.addView(makeKey("|")    { sendSeq("|") })
+        row3.addView(makeKey("/")    { sendSeq("/") })
+        row3.addView(makeKey("-")    { sendSeq("-") })
+        row3.addView(makeKey("LEFT") { sendSeq("\u001B[D") })
+        row3.addView(makeKey("DOWN") { sendSeq("\u001B[B") })
+        row3.addView(makeKey("RGHT") { sendSeq("\u001B[C") })
         row3.addView(makeKey("PGDN") { sendSeq("\u001B[6~") })
         container.addView(row3)
     }
@@ -234,12 +219,12 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
     ): MaterialButton {
         val density = resources.displayMetrics.density
         val lp = LinearLayout.LayoutParams(
-            0,
-            (38 * density).toInt(),
-            1f
-        ).apply { marginStart = (2 * density).toInt(); marginEnd = (2 * density).toInt() }
-
-        val btn = MaterialButton(this).apply {
+            0, (38 * density).toInt(), 1f
+        ).apply {
+            marginStart = (2 * density).toInt()
+            marginEnd = (2 * density).toInt()
+        }
+        return MaterialButton(this).apply {
             text = label
             textSize = 11f
             typeface = Typeface.MONOSPACE
@@ -252,18 +237,17 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
             setBackgroundColor(bg)
             setOnClickListener { action() }
         }
-        return btn
     }
 
     private fun toggleCtrl() {
         ctrlLatched = !ctrlLatched
-        if (ctrlLatched && altLatched) altLatched = false
+        if (ctrlLatched) altLatched = false
         refreshModifierVisuals()
     }
 
     private fun toggleAlt() {
         altLatched = !altLatched
-        if (altLatched && ctrlLatched) ctrlLatched = false
+        if (altLatched) ctrlLatched = false
         refreshModifierVisuals()
     }
 
@@ -306,51 +290,44 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
                     KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_FORWARD_DEL -> {
                         sendBytes(byteArrayOf(0x7F)); true
                     }
-                    KeyEvent.KEYCODE_ENTER -> {
-                        sendBytes(byteArrayOf(0x0D)); true
-                    }
-                    KeyEvent.KEYCODE_TAB -> {
-                        sendBytes(byteArrayOf(0x09)); true
-                    }
-                    KeyEvent.KEYCODE_ESCAPE -> {
-                        sendBytes(byteArrayOf(0x1B)); true
-                    }
+                    KeyEvent.KEYCODE_ENTER -> { sendBytes(byteArrayOf(0x0D)); true }
+                    KeyEvent.KEYCODE_TAB   -> { sendBytes(byteArrayOf(0x09)); true }
+                    KeyEvent.KEYCODE_ESCAPE-> { sendBytes(byteArrayOf(0x1B)); true }
                     else -> false
                 }
             } else false
         }
 
-        binding.sendButton.setOnClickListener {
-            sendBytes(byteArrayOf(0x0D))
-        }
+        binding.sendButton.setOnClickListener { sendBytes(byteArrayOf(0x0D)) }
     }
 
     private fun handleTypedText(text: String) {
-        val s = activeSession() ?: return
+        val session = activeSession() ?: return
         for (ch in text) {
-            var byte = ch.code
+            val byte = ch.code
             if (altLatched) {
-                s.writeBytes(byteArrayOf(0x1B))
+                session.writeBytes(byteArrayOf(0x1B))
                 altLatched = false
                 refreshModifierVisuals()
             }
             if (ctrlLatched) {
-                val code = if (byte in 'a'.code..'z'.code) byte - 0x60
-                else if (byte in 'A'.code..'Z'.code) byte - 0x40
-                else if (byte == ' '.code) 0
-                else byte
-                s.writeBytes(byteArrayOf(code.toByte()))
+                val code = when {
+                    byte in 'a'.code..'z'.code -> byte - 0x60
+                    byte in 'A'.code..'Z'.code -> byte - 0x40
+                    byte == ' '.code -> 0
+                    else -> byte
+                }
+                session.writeBytes(byteArrayOf(code.toByte()))
                 ctrlLatched = false
                 refreshModifierVisuals()
             } else {
-                val bytes = ch.toString().toByteArray(Charsets.UTF_8)
-                s.writeBytes(bytes)
+                session.writeBytes(ch.toString().toByteArray(Charsets.UTF_8))
             }
         }
     }
 
     private fun sendBytes(bytes: ByteArray) {
-        val s = activeSession() ?: return
+        val session = activeSession() ?: return
         var payload = bytes
         if (altLatched && bytes.isNotEmpty() && bytes[0] != 0x1B.toByte()) {
             payload = byteArrayOf(0x1B.toByte()) + bytes
@@ -370,13 +347,13 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
             ctrlLatched = false
             refreshModifierVisuals()
         }
-        s.writeBytes(payload)
+        session.writeBytes(payload)
         focusTerminal()
     }
 
-    private fun sendSeq(s: String) {
-        val s = activeSession() ?: return
-        s.writeText(s)
+    private fun sendSeq(seq: String) {
+        val session = activeSession() ?: return
+        session.writeText(seq)
         focusTerminal()
     }
 
@@ -403,10 +380,9 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
             append("الإصدار: 1.0.0\n")
             append("المطوّر: حسين الخلاقي\n")
             append("GitHub: alwaqyhsyn752-eng\n")
-            append("المحرّك: Native PTY (forkpty)\n")
+            append("المحرّك: Native PTY\n")
             append("API: ").append(Build.VERSION.SDK_INT).append("\n")
-            append("الجلسات: ").append(sessions.size).append("\n")
-            append("VIP: ").append(if (isVipUnlocked()) "مفعّل" else "مقفل")
+            append("الجلسات: ").append(sessions.size)
         }
         MaterialAlertDialogBuilder(this)
             .setTitle("الإعدادات")
@@ -414,10 +390,6 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
             .setPositiveButton("حسناً", null)
             .show()
     }
-
-    private fun isVipUnlocked(): Boolean =
-        getSharedPreferences("awlqy", Context.MODE_PRIVATE)
-            .getBoolean("vip", false)
 
     private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
 }

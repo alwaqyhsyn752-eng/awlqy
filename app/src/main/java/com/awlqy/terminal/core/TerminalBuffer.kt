@@ -1,22 +1,9 @@
 package com.awlqy.terminal.core
 
-import android.graphics.Color
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
-import java.util.ArrayDeque
 
-/**
- * معالج ANSI بسيط:
- * - SGR (ألوان) → Spannable
- * - \r → عودة إلى بداية السطر
- * - \n → سطر جديد
- * - \b → حذف حرف
- * - ESC[2J → مسح الشاشة
- * - ESC[H → home
- * - ESC[K → مسح السطر
- * - باقي ESC → تُحذف
- */
 class TerminalBuffer(private val maxChars: Int = 200_000) {
 
     class Style(var fg: Int = DEFAULT_FG) {
@@ -43,18 +30,14 @@ class TerminalBuffer(private val maxChars: Int = 200_000) {
         val n = text.length
         while (i < n) {
             val c = text[i]
-            if (inEscape) {
-                handleEscape(c)
-                i++
-                continue
-            }
+            if (inEscape) { handleEscape(c); i++; continue }
             when (c) {
                 '\u001B' -> { inEscape = true; escapeBuf.setLength(0); i++ }
                 '\n'      -> { sb.append('\n'); i++ }
                 '\r'      -> { returnToLineStart(); i++ }
                 '\b'      -> { backspace(); i++ }
                 '\t'      -> { sb.append("        ".take(8 - (currentCol() % 8))); i++ }
-                '\u0007'  -> { i++ } // bell - ignore
+                '\u0007'  -> { i++ }
                 else      -> { appendChar(c); i++ }
             }
         }
@@ -65,35 +48,22 @@ class TerminalBuffer(private val maxChars: Int = 200_000) {
         if (!inCsi && c == '[') { inCsi = true; csiBuf.setLength(0); return }
         if (inCsi) {
             if (c in '0'..'9' || c == ';' || c == '?') { csiBuf.append(c); return }
-            // final char
             applyCsi(csiBuf.toString(), c)
-            inCsi = false
-            inEscape = false
-            csiBuf.setLength(0)
+            inCsi = false; inEscape = false; csiBuf.setLength(0)
             return
         }
-        // Two-char escape (e.g., ESC c, ESC 7, ESC 8)
-        // We simply ignore.
         inEscape = false
     }
 
     private fun applyCsi(params: String, final: Char) {
         when (final) {
             'm' -> applySgr(params)
-            'J' -> {
-                val p = params.toIntOrNull() ?: 0
-                if (p == 2 || p == 3) sb.clear()
-            }
-            'H', 'f' -> { /* home - ignore for now */ }
+            'J' -> { if ((params.toIntOrNull() ?: 0) in 2..3) sb.clear() }
             'K' -> {
                 val p = params.toIntOrNull() ?: 0
                 if (p == 0) clearToEndOfLine() else if (p == 2) clearLine()
             }
-            'A' -> { /* cursor up */ }
-            'B' -> { /* cursor down */ }
-            'C' -> { /* cursor right */ }
-            'D' -> { /* cursor left */ }
-            else -> { /* ignore */ }
+            else -> {}
         }
     }
 
@@ -104,17 +74,10 @@ class TerminalBuffer(private val maxChars: Int = 200_000) {
         while (i < parts.size) {
             val p = parts[i]
             when {
-                p == 0  -> curStyle = Style()
+                p == 0 -> curStyle = Style()
                 p in 30..37 -> curStyle.fg = ansiColors[p - 30]
                 p in 90..97 -> curStyle.fg = ansiColors[p - 90 + 8]
                 p == 39 -> curStyle.fg = Style.DEFAULT_FG
-                p == 1  -> { /* bold - keep color */ }
-                p == 22 -> { /* normal - keep color */ }
-                p == 38 && i + 4 < parts.size && parts[i + 1] == 5 -> {
-                    val idx = parts[i + 2]
-                    if (idx in 0..15) curStyle.fg = ansiColors[idx]
-                    i += 2
-                }
             }
             i++
         }
@@ -131,9 +94,8 @@ class TerminalBuffer(private val maxChars: Int = 200_000) {
     }
 
     private fun currentCol(): Int {
-        val nl = sb.indexOf("\n", sb.length - 1)
-        val lineStart = if (nl < 0) 0 else nl + 1
-        return sb.length - lineStart
+        val nl = sb.lastIndexOf("\n")
+        return sb.length - (nl + 1)
     }
 
     private fun returnToLineStart() {
@@ -143,19 +105,17 @@ class TerminalBuffer(private val maxChars: Int = 200_000) {
     }
 
     private fun backspace() {
-        if (sb.isEmpty()) return
-        sb.delete(sb.length - 1, sb.length)
+        if (sb.isNotEmpty()) sb.delete(sb.length - 1, sb.length)
     }
 
     private fun clearToEndOfLine() {
-        val nl = sb.indexOf("\n", sb.length - 1)
-        if (nl < 0) sb.delete(sb.length, sb.length)
+        val nl = sb.lastIndexOf("\n")
+        sb.delete(nl + 1, sb.length)
     }
 
     private fun clearLine() {
         val nl = sb.lastIndexOf("\n")
-        val start = nl + 1
-        if (start < sb.length) sb.delete(start, sb.length)
+        if (nl + 1 < sb.length) sb.delete(nl + 1, sb.length)
     }
 
     private fun trim() {

@@ -15,8 +15,8 @@ class TerminalSession(
     val name: String,
     private val shellPath: String = "/system/bin/sh",
     val cwd: File,
-    rows: Int = 24,
-    cols: Int = 80
+    var rows: Int = 24,
+    var cols: Int = 80
 ) {
 
     interface Listener {
@@ -47,7 +47,8 @@ class TerminalSession(
     fun start() {
         if (running) return
         if (!cwd.exists()) cwd.mkdirs()
-        val args = arrayOf<String>()  // sh without -c, we just open interactive shell
+
+        val args = arrayOf<String>()
         val pair = PtyBridge.createSubprocess(
             cmd = shellPath,
             cwd = cwd.absolutePath,
@@ -96,8 +97,10 @@ class TerminalSession(
         writeBytes(byteArrayOf(code.toByte()))
     }
 
-    fun resize(rows: Int, cols: Int) {
-        if (fd >= 0) PtyBridge.resize(fd, rows, cols)
+    fun resize(newRows: Int, newCols: Int) {
+        rows = newRows
+        cols = newCols
+        if (fd >= 0) PtyBridge.resize(fd, newRows, newCols)
     }
 
     fun sendSignal(sig: Int) {
