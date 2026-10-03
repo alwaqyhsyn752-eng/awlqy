@@ -16,7 +16,6 @@ class AwlqyApp : Application() {
             Timber.plant(Timber.DebugTree())
         }
 
-        // تهيئة البيئة (يستخدمها المدير التنفيذي في المرحلة 3)
         File(filesDir, "home").mkdirs()
         File(filesDir, "usr").mkdirs()
         File(filesDir, "usr/bin").mkdirs()
