@@ -1,8 +1,22 @@
 package com.awlqy.terminal.core
 
+import android.util.Log
+
 object PtyBridge {
 
-    init { System.loadLibrary("awlqy_pty") }
+    @Volatile var nativeAvailable: Boolean = false
+        private set
+
+    init {
+        nativeAvailable = try {
+            System.loadLibrary("awlqy_pty")
+            Log.i("awlqy", "libawlqy_pty.so loaded")
+            true
+        } catch (t: Throwable) {
+            Log.w("awlqy", "native PTY unavailable, falling back to ProcessBuilder: ${t.message}")
+            false
+        }
+    }
 
     external fun createSubprocess(
         cmd: String, cwd: String?,
