@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
 
         if (SessionManager.list().isEmpty()) SessionManager.create("main")
 
-        startForegroundService(Intent(this, TerminalService::class.java))
+        startTerminalService()
 
         setupPager()
         wireAccessoryBar()
@@ -66,6 +66,15 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
         mediator?.detach()
         SessionManager.persist()
         super.onDestroy()
+    }
+
+    private fun startTerminalService() {
+        val i = Intent(this, TerminalService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(i)
+        } else {
+            startService(i)
+        }
     }
 
     // ─── Pager ────────────────────────────────────────

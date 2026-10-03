@@ -28,8 +28,8 @@ class AwlqyApp : Application() {
                 getString(R.string.notification_channel_session),
                 NotificationManager.IMPORTANCE_LOW
             ).apply { setShowBadge(false) }
-            (getSystemService(NotificationManager::class.java))
-                .createNotificationChannel(ch)
+            val mgr = getSystemService(NotificationManager::class.java)
+            mgr?.createNotificationChannel(ch)
         }
     }
 
