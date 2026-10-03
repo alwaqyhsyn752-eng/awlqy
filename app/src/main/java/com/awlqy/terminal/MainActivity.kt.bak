@@ -35,38 +35,17 @@ class MainActivity : AppCompatActivity(), TerminalSession.Listener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        try {
-            binding = ActivityMainBinding.inflate(layoutInflater)
-            setContentView(binding.root)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-            binding.consoleText.typeface = Typeface.MONOSPACE
-            binding.consoleText.textSize = 12f
+        binding.consoleText.typeface = Typeface.MONOSPACE
+        binding.consoleText.textSize = 12f
 
-            binding.gearBtn.setOnClickListener { showSettings() }
+        binding.gearBtn.setOnClickListener { showSettings() }
 
-            buildAccessoryBar()
-            wireSoftKeyboard()
-            newSession()
-        } catch (t: Throwable) {
-            showFatal(t)
-        }
-    }
-
-    private fun showFatal(t: Throwable) {
-        val sw = java.io.StringWriter()
-        t.printStackTrace(java.io.PrintWriter(sw))
-        val msg = sw.toString()
-        android.util.Log.e("awlqy", msg)
-        val tv = android.widget.TextView(this).apply {
-            text = "awlqy crashed:\n\n$msg"
-            typeface = android.graphics.Typeface.MONOSPACE
-            textSize = 10f
-            setTextColor(0xFFFF5C7A.toInt())
-            setPadding(24, 24, 24, 24)
-            setBackgroundColor(0xFF000000.toInt())
-        }
-        val scroll = android.widget.ScrollView(this).apply { addView(tv) }
-        setContentView(scroll)
+        buildAccessoryBar()
+        wireSoftKeyboard()
+        newSession()
     }
 
     override fun onDestroy() {
