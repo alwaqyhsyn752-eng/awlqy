@@ -7,19 +7,4 @@
     <string name="github_handle">alwaqyhsyn752-eng</string>
     <string name="notification_channel_session">جلسة awlqy</string>
     <string name="notification_session_active">جلسة الطرفية نشطة</string>
-    <string name="menu_terminal">الطرفية</string>
-    <string name="menu_settings">الإعدادات</string>
-    <string name="menu_help">المساعدة</string>
-    <string name="menu_code_guide">دليل الأكواد</string>
-    <string name="menu_ascii">مولّد ASCII</string>
-    <string name="menu_pkg">مدير الحزم</string>
-    <string name="menu_apk">بناء APK</string>
-    <string name="menu_about">حول التطبيق</string>
-    <string name="tab_new">جلسة جديدة</string>
-    <string name="action_send">إرسال</string>
-    <string name="action_clear">مسح</string>
-    <string name="action_ctrl_c">Ctrl+C</string>
-    <string name="action_ctrl_d">Ctrl+D</string>
-    <string name="action_tab">Tab</string>
-    <string name="action_esc">Esc</string>
 </resources>

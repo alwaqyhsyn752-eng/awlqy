@@ -8,32 +8,41 @@ import timber.log.Timber
 import java.io.File
 
 class AwlqyApp : Application() {
+
     override fun onCreate() {
         super.onCreate()
-        if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
 
-        // تهيئة بيئة التطبيق: مجلد home، tmp، usr
-        val home = File(filesDir, "home").apply { mkdirs() }
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
+
+        File(filesDir, "home").mkdirs()
         File(filesDir, "tmp").mkdirs()
         File(filesDir, "usr").mkdirs()
         File(filesDir, "usr/bin").mkdirs()
-        System.setProperty("awlqy.home", home.absolutePath)
 
         createNotificationChannel()
-        Timber.i("awlqy by حسين الخلاقي — ready. home=%s", home.absolutePath)
+
+        Timber.i("awlqy phase-1 booted — developer: %s", DEVELOPER)
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val ch = NotificationChannel(
+            val channel = NotificationChannel(
                 CHANNEL_ID,
                 getString(R.string.notification_channel_session),
                 NotificationManager.IMPORTANCE_LOW
-            )
+            ).apply {
+                description = getString(R.string.app_tagline)
+                setShowBadge(false)
+            }
             val mgr = getSystemService(NotificationManager::class.java)
-            mgr.createNotificationChannel(ch)
+            mgr.createNotificationChannel(channel)
         }
     }
 
-    companion object { const val CHANNEL_ID = "awlqy_session" }
+    companion object {
+        const val CHANNEL_ID = "awlqy_session"
+        const val DEVELOPER = "حسين الخلاقي"
+    }
 }
