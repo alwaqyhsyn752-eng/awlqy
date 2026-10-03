@@ -27,7 +27,7 @@ class TerminalView @JvmOverloads constructor(
 
     var rtlEnabled: Boolean = true
     var onInput: ((String) -> Unit)? = null
-    var onSizeChanged: ((rows: Int, cols: Int) -> Unit)? = null
+    var sizeListener: ((rows: Int, cols: Int) -> Unit)? = null
 
     init {
         setLayerType(LAYER_TYPE_HARDWARE, null)
@@ -62,7 +62,7 @@ class TerminalView @JvmOverloads constructor(
         val charW = paint.measureText("M")
         cols = (w / charW).toInt().coerceAtLeast(20)
         rows = (h / lineH).toInt().coerceAtLeast(5)
-        onSizeChanged?.invoke(rows, cols)
+        sizeListener?.invoke(rows, cols)
     }
 
     override fun onDraw(canvas: Canvas) {

@@ -31,7 +31,7 @@ class TerminalFragment : Fragment() {
             b.terminalView.append(chunk)
         }.also { it.start() }
 
-        b.terminalView.onSizeChanged = { r, c -> session?.resize(r, c) }
+        b.terminalView.sizeListener = { r, c -> session?.resize(r, c) }
 
         b.btnSend.setOnClickListener { sendCurrent() }
         b.inputEdit.setOnEditorActionListener { _, id, _ ->
