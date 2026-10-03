@@ -1,3 +1,13 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# ─────────────────────────────────────────────────────────────
+#  awlqy · fix2.sh — إصلاح CMake FetchContent + CRLF
+# ─────────────────────────────────────────────────────────────
+set -euo pipefail
+cd "$(dirname "$0")"
+
+echo "▶ [fix2] إعادة كتابة CMakeLists.txt باستخدام GIT_REPOSITORY"
+
+cat > app/src/main/cpp/CMakeLists.txt <<'AWLQY_CMAKE_EOF'
 cmake_minimum_required(VERSION 3.22.1)
 project(awlqy LANGUAGES C CXX)
 
@@ -74,3 +84,37 @@ target_link_libraries(awlqy_engine
 
 target_compile_options(awlqy_engine PRIVATE
     -O2 -fvisibility=hidden -ffunction-sections -fdata-sections)
+AWLQY_CMAKE_EOF
+
+echo "▶ [fix2] تنظيف كل \r من ملفات المشروع"
+find . -type f \( -name "*.sh" -o -name "*.kt" -o -name "*.cpp" -o -name "*.h" \
+    -o -name "*.txt" -o -name "*.xml" -o -name "*.gradle" -o -name "*.pro" \
+    -o -name "*.yml" -o -name "*.properties" \) -not -path "./.git/*" \
+    -exec sed -i 's/\r$//' {} + 2>/dev/null || true
+
+echo "▶ [fix2] إضافة .gitattributes لمنع CRLF مستقبلاً"
+cat > .gitattributes <<'AWLQY_GA_EOF'
+* text=auto eol=lf
+*.sh    text eol=lf
+*.kt    text eol=lf
+*.cpp   text eol=lf
+*.h     text eol=lf
+*.txt   text eol=lf
+*.xml   text eol=lf
+*.gradle text eol=lf
+*.pro   text eol=lf
+*.yml   text eol=lf
+*.properties text eol=lf
+*.png   binary
+*.jpg   binary
+*.jar   binary
+*.apk   binary
+AWLQY_GA_EOF
+
+echo ""
+echo "✔ [fix2] تم الإصلاح."
+echo ""
+echo "الخطوة التالية:"
+echo "  git add ."
+echo "  git commit -m 'fix: CMake GIT_REPOSITORY + .gitattributes'"
+echo "  git push"
