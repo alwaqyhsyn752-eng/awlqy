@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.ViewPager2
 import com.awlqy.terminal.core.AutoUpdateManager
 import com.awlqy.terminal.core.SessionManager
 import com.awlqy.terminal.databinding.ActivityMainBinding
@@ -24,6 +25,7 @@ import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class MainActivity : AppCompatActivity(), SessionManager.Listener {
 
@@ -35,7 +37,10 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
             val pi: PackageManager = packageManager
             val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                 pi.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0L))
-            else { @Suppress("DEPRECATION") pi.getPackageInfo(packageName, 0) }
+            else {
+                @Suppress("DEPRECATION")
+                pi.getPackageInfo(packageName, 0)
+            }
             info.versionName ?: "1.0.0"
         } catch (_: Exception) { "1.0.0" }
     }
@@ -46,7 +51,8 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
 
-        SessionManager.attachHome(java.io.File(filesDir, "home").apply { mkdirs() })
+        SessionManager.attachContext(this)
+        SessionManager.attachHome(File(filesDir, "home").apply { mkdirs() })
         SessionManager.restore(this)
         SessionManager.addListener(this)
 
@@ -60,13 +66,19 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
         renderActive()
     }
 
-    override fun onPause() { super.onPause(); SessionManager.persist() }
+    override fun onPause() {
+        super.onPause()
+        SessionManager.persist()
+    }
+
     override fun onDestroy() {
         SessionManager.removeListener(this)
         mediator?.detach()
         SessionManager.persist()
         super.onDestroy()
     }
+
+    // ─── Service ─────────────────────────────────────
 
     private fun startTerminalService() {
         val i = Intent(this, TerminalService::class.java)
@@ -77,46 +89,46 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
         }
     }
 
-    // ─── Pager ────────────────────────────────────────
+    // ─── Pager ───────────────────────────────────────
 
     private fun setupPager() {
         binding.pager.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount(): Int = SessionManager.list().size
             override fun createFragment(position: Int): Fragment {
-                val s = SessionManager.list()[position]
+                val list = SessionManager.list()
+                val s = list.getOrNull(position) ?: return Fragment()
                 return TerminalFragment.new(s.id)
             }
         }
-        mediator?.detach()
-        mediator = TabLayoutMediator(binding.tabBar, binding.pager) { tab, pos ->
-            val s = SessionManager.list().getOrNull(pos)
-            tab.text = s?.name ?: "session"
-        }.also { it.attach() }
-
-        binding.pager.registerOnPageChangeCallback(object :
-            androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+        attachMediator()
+        binding.pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
-                val s = SessionManager.list().getOrNull(position) ?: return
+                val list = SessionManager.list()
+                val s = list.getOrNull(position) ?: return
                 SessionManager.setActive(s.id)
                 renderActive()
             }
         })
     }
 
-    private fun refreshSessionsUi() {
-        binding.pager.adapter?.notifyDataSetChanged()
+    private fun attachMediator() {
         mediator?.detach()
         mediator = TabLayoutMediator(binding.tabBar, binding.pager) { tab, pos ->
             tab.text = SessionManager.list().getOrNull(pos)?.name ?: "session"
         }.also { it.attach() }
+    }
+
+    private fun refreshSessionsUi() {
+        binding.pager.adapter?.notifyDataSetChanged()
+        attachMediator()
         val idx = SessionManager.list().indexOfFirst { it.id == SessionManager.active()?.id }
         if (idx >= 0) binding.pager.setCurrentItem(idx, true)
     }
 
     private fun activeFragment(): TerminalFragment? {
         val idx = binding.pager.currentItem
-        val tag = "f$idx"
-        return supportFragmentManager.findFragmentByTag(tag) as? TerminalFragment
+        val fragmentTag = "f$idx"
+        return supportFragmentManager.findFragmentByTag(fragmentTag) as? TerminalFragment
     }
 
     private fun renderActive() {
@@ -124,27 +136,27 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
         binding.promptLabel.text = "awlqy@android:${s.cwd.absolutePath}\$ "
     }
 
-    // ─── Accessory bar ────────────────────────────────
+    // ─── Accessory bar ──────────────────────────────
 
     private fun wireAccessoryBar() {
         binding.keyNewSession.setOnClickListener { newSession() }
         binding.keyKeyboard.setOnClickListener { toggleKeyboard() }
         binding.keyCtrl.setOnClickListener { activeFragment()?.kill() }
         binding.keyAlt.setOnClickListener {
-            Toast.makeText(this, "Alt modifier non-aktif (tanpa PTY)", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Alt modifier غير مفعّل", Toast.LENGTH_SHORT).show()
         }
-        binding.keyTab.setOnClickListener  { insertInput("\t") }
-        binding.keyEsc.setOnClickListener  { insertInput("\u001B") }
-        binding.keyDollar.setOnClickListener { insertInput("$") }
-        binding.keySlash.setOnClickListener  { insertInput("/") }
-        binding.keyPipe.setOnClickListener   { insertInput("|") }
-        binding.keyTilde.setOnClickListener  { insertInput("~") }
+        binding.keyTab.setOnClickListener        { insertInput("\t") }
+        binding.keyEsc.setOnClickListener        { insertInput("\u001B") }
+        binding.keyDollar.setOnClickListener     { insertInput("$") }
+        binding.keySlash.setOnClickListener      { insertInput("/") }
+        binding.keyPipe.setOnClickListener       { insertInput("|") }
+        binding.keyTilde.setOnClickListener      { insertInput("~") }
         binding.keyUnderscore.setOnClickListener { insertInput("_") }
-        binding.keyUp.setOnClickListener    { inputFromHistory(-1) }
-        binding.keyDown.setOnClickListener  { inputFromHistory(+1) }
-        binding.keyLeft.setOnClickListener  { moveCursor(-1) }
-        binding.keyRight.setOnClickListener { moveCursor(+1) }
-        binding.keyEditor.setOnClickListener { openEditor() }
+        binding.keyUp.setOnClickListener         { inputFromHistory(-1) }
+        binding.keyDown.setOnClickListener       { inputFromHistory(+1) }
+        binding.keyLeft.setOnClickListener       { moveCursor(-1) }
+        binding.keyRight.setOnClickListener      { moveCursor(+1) }
+        binding.keyEditor.setOnClickListener     { openEditor() }
     }
 
     private fun insertInput(s: String) {
@@ -158,8 +170,8 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
 
     private fun moveCursor(d: Int) {
         val e = binding.inputEdit
-        val p = (e.selectionStart + d).coerceIn(0, e.text?.length ?: 0)
-        e.setSelection(p)
+        val max = e.text?.length ?: 0
+        e.setSelection((e.selectionStart + d).coerceIn(0, max))
     }
 
     private fun inputFromHistory(dir: Int) {
@@ -179,13 +191,15 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
         }
     }
 
-    // ─── Input row ────────────────────────────────────
+    // ─── Input row ──────────────────────────────────
 
     private fun wireInputRow() {
         binding.runButton.setOnClickListener { runCurrent() }
         binding.inputEdit.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEND ||
-                actionId == EditorInfo.IME_ACTION_DONE) { runCurrent(); true } else false
+                actionId == EditorInfo.IME_ACTION_DONE) {
+                runCurrent(); true
+            } else false
         }
     }
 
@@ -196,7 +210,7 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
         activeFragment()?.sendCommand(cmd)
     }
 
-    // ─── Menu ─────────────────────────────────────────
+    // ─── Menu ───────────────────────────────────────
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
@@ -205,20 +219,19 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.action_new_session -> { newSession(); true }
+            R.id.action_new_session   -> { newSession(); true }
             R.id.action_close_session -> { closeCurrent(); true }
-            R.id.action_open_editor -> { openEditor(); true }
-            R.id.action_install_hub -> { installHub(); true }
-            R.id.action_settings -> { showSettings(); true }
-            R.id.action_update -> { checkUpdates(); true }
-            R.id.action_about -> { showAbout(); true }
+            R.id.action_open_editor   -> { openEditor(); true }
+            R.id.action_install_hub   -> { installHub(); true }
+            R.id.action_settings      -> { showSettings(); true }
+            R.id.action_update        -> { checkUpdates(); true }
+            R.id.action_about         -> { showAbout(); true }
             else -> super.onOptionsItemSelected(item)
         }
     }
 
     private fun newSession() {
-        val n = "session-${SessionManager.list().size + 1}"
-        SessionManager.create(n)
+        SessionManager.create("session-${SessionManager.list().size + 1}")
         refreshSessionsUi()
         binding.pager.post {
             val idx = SessionManager.list().size - 1
@@ -255,15 +268,14 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
             .setTitle("مركز الأدوات السريعة")
             .setItems(items) { _, which ->
                 val cmd = when (which) {
-                    0 -> "echo 'pkg install python' ثم أعد المحاولة (يحتاج Termux)"
-                    1 -> "echo 'pkg install nodejs-lts' (يحتاج Termux)"
-                    2 -> "echo 'pkg install clang make' (يحتاج Termux)"
-                    3 -> "git init 2>/dev/null; git --version; echo 'git init'"
+                    0 -> "echo 'يحتاج Termux: pkg install python'"
+                    1 -> "echo 'يحتاج Termux: pkg install nodejs-lts'"
+                    2 -> "echo 'يحتاج Termux: pkg install clang make'"
+                    3 -> "git --version; git init 2>/dev/null; echo done"
                     4 -> "mkdir -p usr/bin; echo 'ضع aapt2 d8 apksigner zipalign في usr/bin'"
                     else -> "echo hello"
                 }
                 activeFragment()?.sendCommand(cmd)
-                Toast.makeText(this, "أُرسل الأمر إلى الجلسة الحالية", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("إلغاء", null)
             .show()
@@ -290,10 +302,7 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
     private fun showAbout() {
         MaterialAlertDialogBuilder(this)
             .setTitle("حول التطبيق")
-            .setMessage(
-                "awlqy — طرفية هكر حديثة وبيئة تطوير متكاملة.\n" +
-                "© 2025 حسين الخلاقي — MIT"
-            )
+            .setMessage("awlqy — طرفية هكر حديثة وبيئة تطوير متكاملة.\n© 2025 حسين الخلاقي — MIT")
             .setPositiveButton("إغلاق", null)
             .show()
     }
@@ -328,7 +337,7 @@ class MainActivity : AppCompatActivity(), SessionManager.Listener {
         }
     }
 
-    // ─── SessionManager.Listener ──────────────────────
+    // ─── SessionManager.Listener ───────────────────
 
     override fun onSessionChanged(id: String) { }
     override fun onSessionsListChanged() { }

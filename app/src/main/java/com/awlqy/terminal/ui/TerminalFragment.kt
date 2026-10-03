@@ -1,5 +1,6 @@
 package com.awlqy.terminal.ui
 
+import android.graphics.Typeface
 import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
 import android.view.LayoutInflater
@@ -18,7 +19,6 @@ class TerminalFragment : Fragment(), SessionManager.Listener {
 
     private var _b: FragmentTerminalBinding? = null
     private val b get() = _b!!
-
     private var sessionId: String = ""
 
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
@@ -28,8 +28,7 @@ class TerminalFragment : Fragment(), SessionManager.Listener {
 
     override fun onViewCreated(v: View, s: Bundle?) {
         b.consoleText.movementMethod = ScrollingMovementMethod()
-        b.consoleText.setHorizontallyScrolling(false)
-        b.consoleText.typeface = android.graphics.Typeface.MONOSPACE
+        b.consoleText.typeface = Typeface.MONOSPACE
         b.consoleText.textSize = 12f
         sessionId = arguments?.getString(ARG_ID).orEmpty()
         SessionManager.addListener(this)
@@ -51,16 +50,16 @@ class TerminalFragment : Fragment(), SessionManager.Listener {
         b.consoleScroll.post { b.consoleScroll.fullScroll(View.FOCUS_DOWN) }
     }
 
-    private fun renderTail() {
+    override fun onSessionChanged(id: String) {
+        if (id != sessionId) return
         val s = currentSession() ?: return
         val sp = SyntaxHighlighter.highlight(s.buffer.toString())
         b.consoleText.text = sp
         b.consoleScroll.post { b.consoleScroll.fullScroll(View.FOCUS_DOWN) }
     }
 
-    override fun onSessionChanged(id: String) { if (id == sessionId) renderTail() }
-    override fun onSessionsListChanged() { /* handled by parent */ }
-    override fun onActiveChanged(id: String) { /* handled by parent */ }
+    override fun onSessionsListChanged() { }
+    override fun onActiveChanged(id: String) { }
 
     fun sendCommand(cmd: String) {
         val s = currentSession() ?: return
@@ -80,9 +79,9 @@ class TerminalFragment : Fragment(), SessionManager.Listener {
 
             val plan = AutoHealingEngine.analyze(result.exitCode, result.stdout, result.stderr)
             if (plan != null) {
-                SessionManager.append(s.id, "[auto-heal] ⚕ ${plan.summary}\n")
+                SessionManager.append(s.id, "[auto-heal] \u2695 ${plan.summary}\n")
                 plan.suggestion?.let { SessionManager.append(s.id, "[auto-heal]   $it\n") }
-                plan.autoRetryCommand?.let { SessionManager.append(s.id, "[auto-fix]  » $it\n") }
+                plan.autoRetryCommand?.let { SessionManager.append(s.id, "[auto-fix]  \u00BB $it\n") }
             }
             s.lastExit = result.exitCode
             s.busy = false

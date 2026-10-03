@@ -1,14 +1,13 @@
 package com.awlqy.terminal
 
+import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
-import android.text.Spannable
 import android.text.TextWatcher
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -24,6 +23,7 @@ class CodeEditorActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCodeEditorBinding
     private var currentFile: File? = null
     private var highlightLock = false
+
     private val saver = Handler(Looper.getMainLooper())
     private val saveRunnable = Runnable { persist() }
 
@@ -36,13 +36,15 @@ class CodeEditorActivity : AppCompatActivity() {
         binding.toolbar.setNavigationOnClickListener { finish() }
 
         binding.editorInput.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
-            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) { }
+            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) { }
             override fun afterTextChanged(s: Editable?) {
-                if (highlightLock) return
-                highlightLock = true
-                SyntaxHighlighter.highlightInPlace(s ?: return)
-                highlightLock = false
+                if (s == null) return
+                if (!highlightLock) {
+                    highlightLock = true
+                    SyntaxHighlighter.highlightInPlace(s)
+                    highlightLock = false
+                }
                 syncLineNumbers()
                 saver.removeCallbacks(saveRunnable)
                 saver.postDelayed(saveRunnable, 800)
@@ -51,31 +53,33 @@ class CodeEditorActivity : AppCompatActivity() {
 
         binding.editorScroll.setOnScrollChangeListener { _, _, _, _, _ -> syncGutterScroll() }
 
-        binding.btnOpen.setOnClickListener  { openPicker() }
-        binding.btnNew.setOnClickListener   { newFile() }
-        binding.btnSave.setOnClickListener  { persist(); Toast.makeText(this, "حُفظ", Toast.LENGTH_SHORT).show() }
-        binding.btnFind.setOnClickListener  { findDialog() }
-        binding.btnRun.setOnClickListener   { runInTerminal() }
+        binding.btnOpen.setOnClickListener { openPicker() }
+        binding.btnNew.setOnClickListener  { newFile() }
+        binding.btnSave.setOnClickListener {
+            persist()
+            Toast.makeText(this, "حُفظ", Toast.LENGTH_SHORT).show()
+        }
+        binding.btnFind.setOnClickListener { findDialog() }
+        binding.btnRun.setOnClickListener  { runInTerminal() }
 
-        val cwd = intent.getStringExtra("cwd") ?: filesDir.absolutePath
-        binding.toolbar.subtitle = cwd
-        refreshLineNumbers()
+        binding.toolbar.subtitle = intent.getStringExtra("cwd") ?: filesDir.absolutePath
+        syncLineNumbers()
     }
 
     override fun onPause() { super.onPause(); persist() }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> { finish(); true }
-            R.id.action_editor_save -> { persist(); true }
-            R.id.action_editor_run -> { runInTerminal(); true }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.editor_menu, menu)
         return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home            -> { finish(); true }
+            R.id.action_editor_save      -> { persist(); true }
+            R.id.action_editor_run       -> { runInTerminal(); true }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun syncGutterScroll() {
@@ -83,12 +87,11 @@ class CodeEditorActivity : AppCompatActivity() {
     }
 
     private fun syncLineNumbers() {
-        val e = binding.editorInput
-        val lines = e.lineCount.coerceAtLeast(1)
+        val lines = binding.editorInput.lineCount.coerceAtLeast(1)
         val gut = binding.lineNumbers
         while (gut.childCount < lines) {
             val t = TextView(this).apply {
-                typeface = android.graphics.Typeface.MONOSPACE
+                typeface = Typeface.MONOSPACE
                 textSize = 12f
                 setTextColor(0xFF64748B.toInt())
                 setPadding(12, 0, 12, 0)
@@ -102,13 +105,11 @@ class CodeEditorActivity : AppCompatActivity() {
         syncGutterScroll()
     }
 
-    private fun refreshLineNumbers() { syncLineNumbers() }
-
     private fun newFile() {
         currentFile = null
         binding.editorInput.setText("")
         binding.toolbar.title = "بدون عنوان"
-        refreshLineNumbers()
+        syncLineNumbers()
     }
 
     private fun openPicker() {
@@ -139,7 +140,7 @@ class CodeEditorActivity : AppCompatActivity() {
             currentFile = f
             binding.editorInput.setText(f.readText())
             binding.toolbar.title = f.name
-            refreshLineNumbers()
+            syncLineNumbers()
         } catch (e: Exception) {
             Toast.makeText(this, "فشل الفتح: ${e.message}", Toast.LENGTH_LONG).show()
         }
@@ -147,9 +148,7 @@ class CodeEditorActivity : AppCompatActivity() {
 
     private fun persist() {
         val f = currentFile ?: return
-        try {
-            f.writeText(binding.editorInput.text.toString())
-        } catch (_: Exception) { }
+        try { f.writeText(binding.editorInput.text.toString()) } catch (_: Exception) { }
     }
 
     private fun findDialog() {
@@ -186,7 +185,8 @@ class CodeEditorActivity : AppCompatActivity() {
 
     private fun runInTerminal() {
         persist()
-        val f = currentFile ?: run {
+        val f = currentFile
+        if (f == null) {
             Toast.makeText(this, "احفظ الملف أولاً", Toast.LENGTH_SHORT).show()
             return
         }
@@ -196,6 +196,6 @@ class CodeEditorActivity : AppCompatActivity() {
             "js" -> "node ${f.absolutePath}"
             else -> "cat ${f.absolutePath}"
         }
-        Toast.makeText(this, "شغّل يدوياً في الطرفية:\n$cmd", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "شغّل يدوياً:\n$cmd", Toast.LENGTH_LONG).show()
     }
 }
