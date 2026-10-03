@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/awlqy_bg"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView style="@style/SectionTitle" android:text="المطوّر"/>
+        <TextView style="@style/BodyText" android:text="@string/developer_name"/>
+        <TextView style="@style/BodyDim" android:text="@string/developer_role"/>
+
+        <TextView style="@style/SectionTitle" android:layout_marginTop="24dp" android:text="GitHub"/>
+        <TextView style="@style/BodyText" android:text="@string/github_handle"/>
+
+        <TextView style="@style/SectionTitle" android:layout_marginTop="24dp" android:text="الطرفية"/>
+        <EditText android:id="@+id/editShell" style="@style/InputRow"
+            android:hint="/system/bin/sh" android:text="/system/bin/sh"/>
+        <EditText android:id="@+id/editHome" style="@style/InputRow"
+            android:hint="/data/data/com.awlqy.terminal/files/home"
+            android:text="/data/data/com.awlqy.terminal/files/home"/>
+
+        <TextView style="@style/SectionTitle" android:layout_marginTop="24dp" android:text="المظهر"/>
+        <Switch android:id="@+id/switchRtl" style="@style/BodyText"
+            android:text="تفعيل محرك النص العربي (RTL)"/>
+        <Switch android:id="@+id/switchGlass" style="@style/BodyText"
+            android:text="تأثير Glassmorphism"/>
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="@color/awlqy_accent"
+            android:text="حفظ الإعدادات"
+            android:textColor="@color/awlqy_bg"/>
+    </LinearLayout>
+</ScrollView>

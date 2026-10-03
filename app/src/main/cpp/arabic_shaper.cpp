@@ -1,0 +1,123 @@
+#include <jni.h>
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <fribidi.h>
+
+namespace {
+struct F { uint32_t i, f, a, m; };
+static const struct { uint32_t cp; F v; } T[] = {
+    {0x0621,{0xFE80,0,0,0}},{0x0622,{0xFE81,0xFE82,0,0}},{0x0623,{0xFE83,0xFE84,0,0}},
+    {0x0624,{0xFE85,0xFE86,0,0}},{0x0625,{0xFE87,0xFE88,0,0}},{0x0626,{0xFE89,0xFE8A,0xFE8B,0xFE8C}},
+    {0x0627,{0xFE8D,0xFE8E,0,0}},{0x0628,{0xFE8F,0xFE90,0xFE91,0xFE92}},{0x0629,{0xFE93,0xFE94,0,0}},
+    {0x062A,{0xFE95,0xFE96,0xFE97,0xFE98}},{0x062B,{0xFE99,0xFE9A,0xFE9B,0xFE9C}},
+    {0x062C,{0xFE9D,0xFE9E,0xFE9F,0xFEA0}},{0x062D,{0xFEA1,0xFEA2,0xFEA3,0xFEA4}},
+    {0x062E,{0xFEA5,0xFEA6,0xFEA7,0xFEA8}},{0x062F,{0xFEA9,0xFEAA,0,0}},{0x0630,{0xFEAB,0xFEAC,0,0}},
+    {0x0631,{0xFEAD,0xFEAE,0,0}},{0x0632,{0xFEAF,0xFEB0,0,0}},{0x0633,{0xFEB1,0xFEB2,0xFEB3,0xFEB4}},
+    {0x0634,{0xFEB5,0xFEB6,0xFEB7,0xFEB8}},{0x0635,{0xFEB9,0xFEBA,0xFEBB,0xFEBC}},
+    {0x0636,{0xFEBD,0xFEBE,0xFEBF,0xFEC0}},{0x0637,{0xFEC1,0xFEC2,0xFEC3,0xFEC4}},
+    {0x0638,{0xFEC5,0xFEC6,0xFEC7,0xFEC8}},{0x0639,{0xFEC9,0xFECA,0xFECB,0xFECC}},
+    {0x063A,{0xFECD,0xFECE,0xFECF,0xFED0}},{0x0641,{0xFED1,0xFED2,0xFED3,0xFED4}},
+    {0x0642,{0xFED5,0xFED6,0xFED7,0xFED8}},{0x0643,{0xFED9,0xFEDA,0xFEDB,0xFEDC}},
+    {0x0644,{0xFEDD,0xFEDE,0xFEDF,0xFEE0}},{0x0645,{0xFEE1,0xFEE2,0xFEE3,0xFEE4}},
+    {0x0646,{0xFEE5,0xFEE6,0xFEE7,0xFEE8}},{0x0647,{0xFEE9,0xFEEA,0xFEEB,0xFEEC}},
+    {0x0648,{0xFEED,0xFEEE,0,0}},{0x0649,{0xFEEF,0xFEF0,0,0}},{0x064A,{0xFEF1,0xFEF2,0xFEF3,0xFEF4}},
+    {0x0671,{0xFB50,0xFB51,0,0}},{0x0679,{0xFB66,0xFB67,0xFB68,0xFB69}},
+    {0x067A,{0xFB5E,0xFB5F,0xFB60,0xFB61}},{0x067B,{0xFB52,0xFB53,0xFB54,0xFB55}},
+    {0x067E,{0xFB56,0xFB57,0xFB58,0xFB59}},{0x067F,{0xFB62,0xFB63,0xFB64,0xFB65}},
+    {0x0680,{0xFB5A,0xFB5B,0xFB5C,0xFB5D}},{0x0683,{0xFB76,0xFB77,0xFB78,0xFB79}},
+    {0x0684,{0xFB72,0xFB73,0xFB74,0xFB75}},{0x0686,{0xFB7A,0xFB7B,0xFB7C,0xFB7D}},
+    {0x0687,{0xFB7E,0xFB7F,0xFB80,0xFB81}},{0x0688,{0xFB88,0xFB89,0,0}},
+    {0x068C,{0xFB84,0xFB85,0,0}},{0x068D,{0xFB82,0xFB83,0,0}},{0x068E,{0xFB86,0xFB87,0,0}},
+    {0x0691,{0xFB8C,0xFB8D,0,0}},{0x0698,{0xFB8A,0xFB8B,0,0}},
+    {0x06A4,{0xFB6A,0xFB6B,0xFB6C,0xFB6D}},{0x06A6,{0xFB6E,0xFB6F,0xFB70,0xFB71}},
+    {0x06A9,{0xFB8E,0xFB8F,0xFB90,0xFB91}},{0x06AD,{0xFBD3,0xFBD4,0xFBD5,0xFBD6}},
+    {0x06AF,{0xFB92,0xFB93,0xFB94,0xFB95}},{0x06BA,{0xFB9E,0xFB9F,0,0}},
+    {0x06BB,{0xFBA0,0xFBA1,0xFBA2,0xFBA3}},{0x06BE,{0xFBAA,0xFBAB,0xFBAC,0xFBAD}},
+    {0x06C0,{0xFBA4,0xFBA5,0,0}},{0x06C1,{0xFBA6,0xFBA7,0xFBA8,0xFBA9}},
+    {0x06C5,{0xFBE0,0xFBE1,0,0}},{0x06C6,{0xFBD9,0xFBDA,0,0}},
+    {0x06C7,{0xFBD7,0xFBD8,0,0}},{0x06C8,{0xFBDB,0xFBDC,0,0}},
+    {0x06C9,{0xFBE2,0xFBE3,0,0}},{0x06CB,{0xFBDE,0xFBDF,0,0}},
+    {0x06CC,{0xFBFC,0xFBFD,0xFBFE,0xFBFF}},{0x06D0,{0xFBE4,0xFBE5,0xFBE6,0xFBE7}},
+    {0x06D2,{0xFBAE,0xFBAF,0,0}},{0x06D3,{0xFBB0,0xFBB1,0,0}},
+};
+
+const F *lk(uint32_t c){ for(auto &e:T) if(e.cp==c) return &e.v; return nullptr; }
+bool isAr(uint32_t c){ return (c>=0x0600&&c<=0x06FF)||(c>=0x0750&&c<=0x077F)||(c>=0x08A0&&c<=0x08FF)||(c>=0xFB50&&c<=0xFDFF)||(c>=0xFE70&&c<=0xFEFF); }
+bool isMark(uint32_t c){ return (c>=0x064B&&c<=0x065F)||(c>=0x0610&&c<=0x061A)||(c>=0x06D6&&c<=0x06DC)||(c>=0x06DF&&c<=0x06E4)||(c>=0x06E7&&c<=0x06E8)||(c>=0x06EA&&c<=0x06ED)||c==0x0670||c==0x06DD||c==0x06DE; }
+bool joins(const F *f){ return f && (f->a || f->m); }
+
+std::vector<uint32_t> u8to32(const std::string &s){
+    std::vector<uint32_t> o; size_t i=0,n=s.size();
+    while(i<n){ uint8_t c=(uint8_t)s[i]; uint32_t cp=0xFFFD; int ex=0;
+        if(c<0x80){cp=c;ex=0;} else if((c&0xE0)==0xC0){cp=c&0x1F;ex=1;}
+        else if((c&0xF0)==0xE0){cp=c&0x0F;ex=2;} else if((c&0xF8)==0xF0){cp=c&0x07;ex=3;}
+        else{++i;continue;}
+        bool ok=true;
+        for(int k=0;k<ex;++k){ if(i+1>=n){ok=false;break;} ++i; uint8_t cc=(uint8_t)s[i];
+            if((cc&0xC0)!=0x80){ok=false;break;} cp=(cp<<6)|(cc&0x3F);}
+        o.push_back(ok?cp:0xFFFD); ++i;
+    } return o;
+}
+std::string u32to8(const std::vector<uint32_t> &v){
+    std::string o; o.reserve(v.size()*2);
+    for(uint32_t cp:v){
+        if(cp<0x80)o.push_back((char)cp);
+        else if(cp<0x800){o.push_back((char)(0xC0|(cp>>6)));o.push_back((char)(0x80|(cp&0x3F)));}
+        else if(cp<0x10000){o.push_back((char)(0xE0|(cp>>12)));o.push_back((char)(0x80|((cp>>6)&0x3F)));o.push_back((char)(0x80|(cp&0x3F)));}
+        else{o.push_back((char)(0xF0|(cp>>18)));o.push_back((char)(0x80|((cp>>12)&0x3F)));o.push_back((char)(0x80|((cp>>6)&0x3F)));o.push_back((char)(0x80|(cp&0x3F)));}
+    } return o;
+}
+std::vector<uint32_t> shape(const std::vector<uint32_t> &in){
+    std::vector<uint32_t> o; o.reserve(in.size()); size_t n=in.size();
+    for(size_t i=0;i<n;++i){
+        uint32_t cp=in[i]; const F *f=lk(cp);
+        if(!f){o.push_back(cp);continue;}
+        bool pj=false;
+        for(ssize_t j=(ssize_t)i-1;j>=0;--j){uint32_t p=in[(size_t)j]; if(isMark(p))continue; if(isAr(p))pj=joins(lk(p)); break;}
+        bool nj=false;
+        for(size_t j=i+1;j<n;++j){uint32_t x=in[j]; if(isMark(x))continue; if(isAr(x))nj=(lk(x)!=nullptr); break;}
+        uint32_t c=f->i;
+        if(pj&&nj&&f->m)c=f->m; else if(pj&&f->f)c=f->f; else if(nj&&f->a)c=f->a;
+        o.push_back(c);
+    } return o;
+}
+std::vector<uint32_t> bidi(const std::vector<uint32_t> &in){
+    if(in.empty())return in;
+    FriBidiStrIndex len=(FriBidiStrIndex)in.size();
+    FriBidiParType base=FRIBIDI_PAR_ON;
+    std::vector<FriBidiCharType> t(len); std::vector<FriBidiBracketType> b(len);
+    std::vector<FriBidiLevel> lv(len); std::vector<FriBidiChar> vis(len);
+    const auto *src=reinterpret_cast<const FriBidiChar*>(in.data());
+    fribidi_get_bidi_types(src,len,t.data());
+    fribidi_get_bracket_types(src,len,t.data(),b.data());
+    if(!fribidi_get_par_embedding_levels_ex(t.data(),b.data(),len,&base,lv.data()))return in;
+    if(!fribidi_reorder_line(FRIBIDI_FLAGS_DEFAULT,t.data(),len,0,base,lv.data(),
+        reinterpret_cast<FriBidiChar*>(vis.data()),nullptr))return in;
+    return vis;
+}
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_awlqy_terminal_core_ArabicShaper_nativeShapeTerminal(JNIEnv *env,jclass,jstring src){
+    if(!src)return env->NewStringUTF("");
+    const char *c=env->GetStringUTFChars(src,nullptr); std::string in(c?c:""); env->ReleaseStringUTFChars(src,c);
+    auto r=bidi(shape(u8to32(in))); return env->NewStringUTF(u32to8(r).c_str());
+}
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_awlqy_terminal_core_ArabicShaper_nativeShapeLogical(JNIEnv *env,jclass,jstring src){
+    if(!src)return env->NewStringUTF("");
+    const char *c=env->GetStringUTFChars(src,nullptr); std::string in(c?c:""); env->ReleaseStringUTFChars(src,c);
+    auto r=shape(u8to32(in)); return env->NewStringUTF(u32to8(r).c_str());
+}
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_awlqy_terminal_core_ArabicShaper_nativeContainsArabic(JNIEnv *env,jclass,jstring src){
+    if(!src)return JNI_FALSE;
+    const char *c=env->GetStringUTFChars(src,nullptr); bool f=false;
+    if(c){ for(const char*p=c;*p&&!f;){uint32_t cp=0; uint8_t b=(uint8_t)*p;
+        if(b<0x80){cp=b;p+=1;} else if((b&0xE0)==0xC0&&p[1]){cp=((b&0x1F)<<6)|(p[1]&0x3F);p+=2;}
+        else if((b&0xF0)==0xE0&&p[1]&&p[2]){cp=((b&0x0F)<<12)|((p[1]&0x3F)<<6)|(p[2]&0x3F);p+=3;}
+        else if((b&0xF8)==0xF0&&p[1]&&p[2]&&p[3]){cp=((b&0x07)<<18)|((p[1]&0x3F)<<12)|((p[2]&0x3F)<<6)|(p[3]&0x3F);p+=4;}
+        else{p+=1;} if(isAr(cp))f=true; } }
+    env->ReleaseStringUTFChars(src,c); return f?JNI_TRUE:JNI_FALSE;
+}

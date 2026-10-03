@@ -1,0 +1,3 @@
+-keep class com.awlqy.terminal.core.** { *; }
+-keepclasseswithmembernames class * { native <methods>; }
+-keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod

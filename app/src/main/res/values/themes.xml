@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.Awlqy" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/awlqy_accent</item>
+        <item name="colorOnPrimary">@color/awlqy_bg</item>
+        <item name="colorSurface">@color/awlqy_surface</item>
+        <item name="colorOnSurface">@color/awlqy_text</item>
+        <item name="android:colorBackground">@color/awlqy_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@color/awlqy_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+        <item name="android:windowBackground">@color/awlqy_bg</item>
+    </style>
+</resources>
