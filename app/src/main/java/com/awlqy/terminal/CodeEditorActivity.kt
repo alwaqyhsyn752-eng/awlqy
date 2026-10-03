@@ -115,7 +115,7 @@ class CodeEditorActivity : AppCompatActivity() {
     private fun openPicker() {
         val cwd = intent.getStringExtra("cwd") ?: filesDir.absolutePath
         val dir = File(cwd).let { if (it.exists()) it else filesDir }
-        val files = dir.listFiles()?.sortedBy { it.name } ?: emptyArray()
+        val files = dir.listFiles()?.sortedBy { it.name } ?: emptyList<File>()
         if (files.isEmpty()) {
             Toast.makeText(this, "لا توجد ملفات في $cwd", Toast.LENGTH_SHORT).show()
             return
