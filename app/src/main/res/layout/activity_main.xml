@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000"
@@ -27,29 +26,38 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="#000000"
-            app:title="awlqy"
-            app:titleTextColor="#22D3EE"/>
-
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
+            android:layout_height="36dp"
             android:background="#0A0E14"
-            android:scrollbars="none">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <LinearLayout
-                android:id="@+id/sessionTabs"
-                android:layout_width="wrap_content"
+            <HorizontalScrollView
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="6dp"
-                android:paddingEnd="6dp"/>
-        </HorizontalScrollView>
+                android:layout_weight="1"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/sessionTabs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"/>
+            </HorizontalScrollView>
+
+            <TextView
+                android:id="@+id/gearBtn"
+                android:layout_width="40dp"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="⚙"
+                android:textColor="#22D3EE"
+                android:textSize="18sp"/>
+        </LinearLayout>
 
         <ScrollView
             android:id="@+id/consoleScroll"
@@ -58,7 +66,7 @@
             android:layout_weight="1"
             android:background="#000000"
             android:fillViewport="true"
-            android:padding="8dp"
+            android:padding="6dp"
             android:scrollbars="vertical">
 
             <TextView
@@ -72,38 +80,21 @@
                 android:textSize="12sp"/>
         </ScrollView>
 
-        <HorizontalScrollView
+        <LinearLayout
+            android:id="@+id/accessoryContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#0A0E14"
-            android:scrollbars="none">
-
-            <LinearLayout
-                android:id="@+id/accessoryBar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="4dp"/>
-        </HorizontalScrollView>
+            android:orientation="vertical"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#0A0E14"
             android:orientation="horizontal"
-            android:padding="6dp">
-
-            <TextView
-                android:id="@+id/promptLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:fontFamily="monospace"
-                android:paddingEnd="6dp"
-                android:text="awlqy@android:~$ "
-                android:textColor="#4ADE80"
-                android:textSize="12sp"/>
+            android:padding="4dp">
 
             <EditText
                 android:id="@+id/inputEdit"
@@ -112,27 +103,29 @@
                 android:layout_weight="1"
                 android:background="#1E293B"
                 android:fontFamily="monospace"
-                android:hint="اكتب أمراً…"
-                android:imeOptions="actionSend|flagNoFullscreen"
+                android:hint="soft keyboard"
+                android:imeOptions="flagNoEnterAction|flagNoExtractUi"
                 android:inputType="text|textNoSuggestions|textVisiblePassword|textMultiLine"
-                android:maxLines="3"
-                android:padding="10dp"
+                android:maxLines="4"
+                android:minLines="1"
+                android:padding="8dp"
                 android:textColor="#E2E8F0"
                 android:textColorHint="#64748B"
                 android:textSize="12sp"/>
 
             <Button
-                android:id="@+id/runButton"
+                android:id="@+id/sendButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="4dp"
                 android:backgroundTint="#22D3EE"
                 android:fontFamily="monospace"
                 android:minWidth="0dp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:text="RUN"
-                android:textColor="#000000"/>
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="↵"
+                android:textColor="#000000"
+                android:textSize="16sp"/>
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>
