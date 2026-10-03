@@ -1,3 +1,13 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# ─────────────────────────────────────────────────────────────
+#  awlqy · fix-arabic.sh — إصلاح ArabicShaper API
+# ─────────────────────────────────────────────────────────────
+set -euo pipefail
+cd "$(dirname "$0")"
+
+echo "▶ [fix-arabic] إعادة كتابة ArabicShaper.kt"
+
+cat > app/src/main/java/com/awlqy/terminal/core/ArabicShaper.kt <<'EOF_AR'
 package com.awlqy.terminal.core
 
 import java.text.Bidi
@@ -62,3 +72,13 @@ object ArabicShaper {
         return sb.toString()
     }
 }
+EOF_AR
+
+echo "▶ [fix-arabic] التحقق"
+grep -n "Bidi(" app/src/main/java/com/awlqy/terminal/core/ArabicShaper.kt
+
+echo ""
+echo "✔ تم الإصلاح. الآن:"
+echo "   git add -A"
+echo "   git commit -m 'fix: Bidi constructor + reorderVisually Object[]'"
+echo "   git push"
