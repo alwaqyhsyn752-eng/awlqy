@@ -2,11 +2,6 @@ package com.awlqy.terminal.core
 
 import java.text.Bidi
 
-/**
- * محرك معالجة النص العربي عبر java.text.Bidi المدمج في Android.
- * - يكشف الأسطر التي تحتاج bidi.
- * - يعيد ترتيب الحروف بصرياً عند الحاجة.
- */
 object ArabicShaper {
 
     fun needsBidi(text: String): Boolean {
@@ -18,30 +13,17 @@ object ArabicShaper {
     fun reorderLine(line: String): String {
         if (line.isEmpty()) return line
         if (!needsBidi(line)) return line
-
         val chars = line.toCharArray()
-        val bidi = Bidi(
-            chars,
-            0,
-            null,
-            0,
-            chars.size,
-            Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT
-        )
+        val bidi = Bidi(chars, 0, null, 0, chars.size,
+            Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT)
         if (bidi.isLeftToRight) return line
-
         val levels = ByteArray(chars.size)
         bidi.getLevels(levels, 0)
-
         val boxes: Array<Any> = Array(chars.size) { i -> chars[i] }
         Bidi.reorderVisually(levels, 0, boxes, 0, chars.size)
-
         val out = CharArray(chars.size)
         var i = 0
-        while (i < boxes.size) {
-            out[i] = boxes[i] as Char
-            i++
-        }
+        while (i < boxes.size) { out[i] = boxes[i] as Char; i++ }
         return String(out)
     }
 

@@ -75,9 +75,6 @@ object ShellExecutor {
         ShellResult(exit, out.toString(), err.toString(), System.currentTimeMillis() - start)
     }
 
-    /**
-     * محرّك التشخيص الذكي: يقرأ stderr/stdout ويقترح حلاً فورياً.
-     */
     fun diagnose(stderr: String, stdout: String): String? {
         val s = "$stderr\n$stdout"
         if (s.isBlank()) return null
@@ -86,46 +83,31 @@ object ShellExecutor {
             return "مكتبة Python مفقودة '${it.groupValues[1]}'. جرّب: pip install ${it.groupValues[1]}"
         }
         Regex("ImportError: cannot import name '([^']+)'").find(s)?.let {
-            return "استيراد فاشل لـ '${it.groupValues[1]}'. تحقق من التثبيت أو اسم الوحدة."
+            return "استيراد فاشل لـ '${it.groupValues[1]}'. تحقق من التثبيت."
         }
         Regex("Cannot find module '([^']+)'").find(s)?.let {
             return "حزمة Node.js مفقودة '${it.groupValues[1]}'. جرّب: npm install ${it.groupValues[1]}"
         }
-        Regex("command not found|([^:\\s]+): not found").find(s)?.let {
-            val name = it.groupValues.getOrNull(1).orEmpty().ifBlank { "الأمر" }
-            return "'$name' غير مثبت. جرّب: pkg install ${'$'}name (عبر Termux) أو تحقق من PATH."
+        if (s.contains("command not found") || s.contains(": not found")) {
+            return "الأمر غير مثبت أو غير موجود في PATH. تحقق من الاسم."
         }
         if (s.contains("No such file or directory")) {
-            return "الملف/المجلد غير موجود. تحقق من المسار أو أنشئه."
+            return "الملف/المجلد غير موجود. تحقق من المسار."
         }
         if (s.contains("Permission denied")) {
-            return "صلاحية مرفوضة. جرّب: chmod +x على الملف، أو شغّل بأمر مختلف."
+            return "صلاحية مرفوضة. جرّب: chmod +x على الملف."
         }
         if (s.contains("SyntaxError")) {
             return "خطأ بنيوي. تحقق من علامات الاقتباس، الأقواس، والمسافات البادئة."
         }
         if (s.contains("is a directory")) {
-            return "هذا مسار مجلد، ليس ملفاً. استخدم ls لعرض المحتوى."
+            return "هذا مسار مجلد، ليس ملفاً. استخدم ls."
         }
         if (s.contains("No space left on device")) {
-            return "المساحة ممتلئة. احذف الملفات غير الضرورية من cache/files."
+            return "المساحة ممتلئة. احذف ملفات غير ضرورية."
         }
         if (s.contains("Cannot resolve host") || s.contains("Could not resolve host")) {
             return "تعذر الاتصال بالشبكة. تحقق من الإنترنت."
-        }
-        return null
-    }
-
-    /**
-     * يعيد الإصلاح المقترح كأمر قابل للتنفيذ (أو null).
-     */
-    fun autoHealCommand(stderr: String, stdout: String): String? {
-        val s = "$stderr\n$stdout"
-        Regex("ModuleNotFoundError: No module named '([^']+)'").find(s)?.let {
-            return "python -m pip install --no-input ${it.groupValues[1]} 2>&1 || echo 'pip غير متاح'"
-        }
-        Regex("Cannot find module '([^']+)'").find(s)?.let {
-            return "npm install ${it.groupValues[1]} 2>&1 || echo 'npm غير متاح'"
         }
         return null
     }
