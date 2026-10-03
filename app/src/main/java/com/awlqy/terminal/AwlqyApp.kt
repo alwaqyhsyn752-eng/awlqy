@@ -11,21 +11,27 @@ class AwlqyApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
 
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
+
+        // تهيئة البيئة (يستخدمها المدير التنفيذي في المرحلة 3)
         File(filesDir, "home").mkdirs()
+        File(filesDir, "usr").mkdirs()
         File(filesDir, "usr/bin").mkdirs()
         File(filesDir, "apk-work").mkdirs()
+        File(filesDir, "logs").mkdirs()
 
-        createChannel()
-        Timber.i("awlqy phase-5 booted — developer: حسين الخلاقي")
+        createNotificationChannel()
+        Timber.i("awlqy booted — phase-1 — developer: حسين الخلاقي")
     }
 
-    private fun createChannel() {
+    private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val ch = NotificationChannel(
                 CHANNEL_ID,
-                getString(R.string.notification_channel_session),
+                getString(R.string.notification_channel),
                 NotificationManager.IMPORTANCE_LOW
             ).apply { setShowBadge(false) }
             val mgr = getSystemService(NotificationManager::class.java)

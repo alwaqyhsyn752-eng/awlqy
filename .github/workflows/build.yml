@@ -45,7 +45,7 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Cache Gradle caches
+      - name: Cache Gradle
         uses: actions/cache@v4
         with:
           path: |
@@ -58,7 +58,7 @@ jobs:
       - name: Build Debug APK
         run: gradle :app:assembleDebug --no-daemon --stacktrace
 
-      - name: Collect artifact
+      - name: Collect APK
         run: |
           set -e
           mkdir -p out
@@ -72,7 +72,7 @@ jobs:
           sha256sum out/awlqy.apk > out/awlqy.apk.sha256
           ls -la out
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: awlqy-apk

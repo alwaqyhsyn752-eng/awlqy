@@ -1,131 +1,67 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+nano app/src/main/res/layout/activity_main.xml
+k6k <?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000"
-    android:orientation="vertical"
-    android:fitsSystemWindows="true">
+    android:background="#000000">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
+    <TextView
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="#000000"
-        app:title="awlqy"
-        app:titleTextColor="#22D3EE"/>
-
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabBar"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:background="#0A0E14"
-        app:tabIndicatorColor="#22D3EE"
-        app:tabSelectedTextColor="#22D3EE"
-        app:tabTextColor="#64748B"
-        app:tabMode="scrollable"/>
-
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="#000000">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:alpha="0.05"
-            android:fontFamily="monospace"
-            android:gravity="center"
-            android:letterSpacing="0.25"
-            android:shadowColor="#22D3EE"
-            android:shadowDx="0"
-            android:shadowDy="0"
-            android:shadowRadius="30"
-            android:text="Q · W"
-            android:textColor="#22D3EE"
-            android:textSize="120sp"
-            android:textStyle="bold"/>
-
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/pager"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-    </FrameLayout>
-
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#0A0E14"
-        android:scrollbars="none">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="4dp">
-
-            <Button android:id="@+id/keyNewSession" style="@style/KeyGlass" android:text="+ NEW"/>
-            <Button android:id="@+id/keyKeyboard"   style="@style/KeyGlass" android:text="⌨"/>
-            <Button android:id="@+id/keyCtrl"       style="@style/KeyGlass" android:text="CTRL+C"/>
-            <Button android:id="@+id/keyAlt"        style="@style/KeyGlass" android:text="ALT"/>
-            <Button android:id="@+id/keyTab"        style="@style/KeyGlass" android:text="TAB"/>
-            <Button android:id="@+id/keyEsc"        style="@style/KeyGlass" android:text="ESC"/>
-            <Button android:id="@+id/keyDollar"     style="@style/KeyGlass" android:text="$"/>
-            <Button android:id="@+id/keySlash"      style="@style/KeyGlass" android:text="/"/>
-            <Button android:id="@+id/keyPipe"       style="@style/KeyGlass" android:text="|"/>
-            <Button android:id="@+id/keyTilde"      style="@style/KeyGlass" android:text="~"/>
-            <Button android:id="@+id/keyUnderscore" style="@style/KeyGlass" android:text="_"/>
-            <Button android:id="@+id/keyUp"         style="@style/KeyGlass" android:text="↑"/>
-            <Button android:id="@+id/keyDown"       style="@style/KeyGlass" android:text="↓"/>
-            <Button android:id="@+id/keyLeft"       style="@style/KeyGlass" android:text="←"/>
-            <Button android:id="@+id/keyRight"      style="@style/KeyGlass" android:text="→"/>
-            <Button android:id="@+id/keyEditor"     style="@style/KeyGlass" android:text="IDE"/>
-        </LinearLayout>
-    </HorizontalScrollView>
+        android:layout_height="match_parent"
+        android:alpha="0.05"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:letterSpacing="0.25"
+        android:shadowColor="#22D3EE"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:shadowRadius="30"
+        android:text="Q · W"
+        android:textColor="#22D3EE"
+        android:textSize="120sp"
+        android:textStyle="bold"/>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#0A0E14"
-        android:orientation="horizontal"
-        android:padding="6dp">
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp">
 
         <TextView
-            android:id="@+id/promptLabel"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:fontFamily="monospace"
-            android:gravity="center_vertical"
-            android:paddingEnd="6dp"
-            android:text="awlqy@android:~$ "
+            android:text="awlqy"
+            android:textColor="#22D3EE"
+            android:textSize="48sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fontFamily="monospace"
+            android:text="@string/app_tagline"
+            android:textColor="#64748B"
+            android:textSize="13sp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:fontFamily="monospace"
+            android:text="PHASE 1 · Skeleton Ready"
             android:textColor="#4ADE80"
             android:textSize="12sp"/>
 
-        <EditText
-            android:id="@+id/inputEdit"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="#1E293B"
-            android:fontFamily="monospace"
-            android:hint="اكتب أمراً…"
-            android:imeOptions="actionSend|flagNoFullscreen"
-            android:inputType="text|textNoSuggestions|textVisiblePassword|textMultiLine"
-            android:maxLines="3"
-            android:padding="10dp"
-            android:textColor="#E2E8F0"
-            android:textColorHint="#64748B"
-            android:textSize="12sp"/>
-
-        <Button
-            android:id="@+id/runButton"
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:backgroundTint="#22D3EE"
+            android:layout_marginTop="8dp"
             android:fontFamily="monospace"
-            android:text="RUN"
-            android:textColor="#000000"/>
+            android:text="المطوّر: حسين الخلاقي"
+            android:textColor="#94A3B8"
+            android:textSize="12sp"/>
     </LinearLayout>
-</LinearLayout>
+</FrameLayout>

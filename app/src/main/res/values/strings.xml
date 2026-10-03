@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">awlqy</string>
-    <string name="app_tagline">Hacker Terminal · IDE</string>
-    <string name="notification_channel_session">جلسة awlqy</string>
-    <string name="notification_session_active">awlqy process running in background</string>
+    <string name="app_tagline">Smart Terminal · Multi-IDE · APK Suite</string>
+    <string name="notification_channel">awlqy session</string>
+    <string name="notification_session_active">awlqy session active</string>
 </resources>
