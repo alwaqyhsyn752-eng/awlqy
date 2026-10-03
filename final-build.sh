@@ -1,3 +1,181 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# ─────────────────────────────────────────────────────────────
+#  awlqy · final-build.sh
+#  يحل مشكلة libawlqy_pty.so — يبني بـ ProcessBuilder فقط
+# ─────────────────────────────────────────────────────────────
+set -euo pipefail
+cd "$(dirname "$0")"
+
+mkdir -p .github/workflows
+mkdir -p app/src/main/java/com/awlqy/terminal
+
+# ═════════════════════════════════════════════════════════════
+# 1. .github/workflows/build.yml
+# ═════════════════════════════════════════════════════════════
+cat > .github/workflows/build.yml <<'YML_EOF'
+name: Build awlqy APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: awlqy-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Debug APK
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: >-
+            platform-tools
+            platforms;android-34
+            build-tools;34.0.0
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.7'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: awlqy-gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            awlqy-gradle-${{ runner.os }}-
+
+      - name: Build Debug APK
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Collect APK
+        run: |
+          set -e
+          mkdir -p out
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          if [ ! -f "$APK" ]; then
+            echo "APK not found at $APK"
+            find app/build/outputs -type f -name "*.apk" || true
+            exit 1
+          fi
+          cp "$APK" out/awlqy.apk
+          sha256sum out/awlqy.apk > out/awlqy.apk.sha256
+          ls -la out
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: awlqy-apk
+          path: |
+            out/awlqy.apk
+            out/awlqy.apk.sha256
+          if-no-files-found: error
+          retention-days: 30
+YML_EOF
+
+# ═════════════════════════════════════════════════════════════
+# 2. app/build.gradle.kts
+# ═════════════════════════════════════════════════════════════
+cat > app/build.gradle.kts <<'GRADLE_EOF'
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
+
+android {
+    namespace = "com.awlqy.terminal"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.awlqy.terminal"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0.0"
+    }
+
+    buildTypes {
+        debug {
+            isMinifyEnabled = false
+            isDebuggable = true
+        }
+        release {
+            isMinifyEnabled = false
+            isShrinkResources = false
+            signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    buildFeatures {
+        viewBinding = true
+        buildConfig = true
+    }
+
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/*.kotlin_module",
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE*",
+                "META-INF/NOTICE*"
+            )
+        }
+    }
+}
+
+dependencies {
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("com.jakewharton.timber:timber:5.0.1")
+}
+GRADLE_EOF
+
+# ═════════════════════════════════════════════════════════════
+# 3. MainActivity.kt
+# ═════════════════════════════════════════════════════════════
+cat > app/src/main/java/com/awlqy/terminal/MainActivity.kt <<'KOTLIN_EOF'
 package com.awlqy.terminal
 
 import android.content.Context
@@ -454,3 +632,39 @@ class MainActivity : AppCompatActivity() {
 
     private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
 }
+KOTLIN_EOF
+
+# ═════════════════════════════════════════════════════════════
+# التحقق
+# ═════════════════════════════════════════════════════════════
+echo ""
+echo "▶ [final-build] الملفات المُنشأة:"
+for f in \
+    .github/workflows/build.yml \
+    app/build.gradle.kts \
+    app/src/main/java/com/awlqy/terminal/MainActivity.kt
+do
+    if [ -f "$f" ]; then
+        echo "  ✔ $f  ($(wc -l < "$f") سطر)"
+    else
+        echo "  ✗ $f مفقود!"
+    fi
+done
+
+echo ""
+echo "▶ [final-build] أول سطر من MainActivity:"
+head -n 1 app/src/main/java/com/awlqy/terminal/MainActivity.kt
+
+echo ""
+echo "▶ [final-build] أول سطر من build.gradle.kts:"
+head -n 1 app/build.gradle.kts
+
+echo ""
+echo "▶ [final-build] لا NDK ولا externalNativeBuild:"
+grep -c "externalNativeBuild\|ndkVersion\|libawlqy_pty" app/build.gradle.kts app/src/main/java/com/awlqy/terminal/MainActivity.kt 2>/dev/null || echo "  ✔ نظيف"
+
+echo ""
+echo "✔ [final-build] انتهى. الآن:"
+echo "   git add -A"
+echo "   git commit -m 'fix: pure ProcessBuilder engine (no NDK, no crash)'"
+echo "   git push"
