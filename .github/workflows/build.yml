@@ -3,13 +3,12 @@ name: Build awlqy APK
 on:
   push:
     branches: [ main, master ]
-    tags:     [ 'v*' ]
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: awlqy-build-${{ github.ref }}
@@ -17,9 +16,9 @@ concurrency:
 
 jobs:
   build:
-    name: Build APK (release-signed)
+    name: Build Debug APK
     runs-on: ubuntu-22.04
-    timeout-minutes: 40
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -56,14 +55,19 @@ jobs:
           restore-keys: |
             awlqy-gradle-${{ runner.os }}-
 
-      - name: Build Release APK
-        run: gradle :app:assembleRelease --no-daemon --stacktrace
+      - name: Build Debug APK
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
 
       - name: Collect artifact
         run: |
           set -e
           mkdir -p out
-          APK="$(ls app/build/outputs/apk/release/*.apk | head -n 1)"
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          if [ ! -f "$APK" ]; then
+            echo "APK not found at $APK"
+            find app/build/outputs -type f -name "*.apk" || true
+            exit 1
+          fi
           cp "$APK" out/awlqy.apk
           sha256sum out/awlqy.apk > out/awlqy.apk.sha256
           ls -la out
@@ -77,15 +81,3 @@ jobs:
             out/awlqy.apk.sha256
           if-no-files-found: error
           retention-days: 30
-
-      - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          name: awlqy ${{ github.ref_name }}
-          files: |
-            out/awlqy.apk
-            out/awlqy.apk.sha256
-          generate_release_notes: true
-          draft: false
-          prerelease: false

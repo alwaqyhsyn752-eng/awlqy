@@ -1,21 +1,14 @@
-package com.awlqy.terminal.update
+package com.awlqy.terminal.core
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.core.content.FileProvider
-import com.awlqy.terminal.BuildConfig
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
-/**
- * مدير التحديثات من GitHub Releases.
- * - يقرأ https://api.github.com/repos/{owner}/awlqy/releases/latest
- * - يقارن tag_name مع BuildConfig.VERSION_NAME
- * - ينزّل ملف APK إلى cacheDir ثم يفتح المثبّت عبر FileProvider
- */
 object AutoUpdateManager {
 
     private const val OWNER = "alwaqyhsyn752-eng"
@@ -31,7 +24,7 @@ object AutoUpdateManager {
         val hasUpdate: Boolean
     )
 
-    fun checkLatest(ctx: Context): UpdateInfo? {
+    fun checkLatest(ctx: Context, currentVersion: String): UpdateInfo? {
         var conn: HttpURLConnection? = null
         return try {
             val u = URL(API_URL)
@@ -65,8 +58,8 @@ object AutoUpdateManager {
                 }
             }
 
-            val current = BuildConfig.VERSION_NAME.trimStart('v', 'V')
             val latest = tag.trimStart('v', 'V')
+            val current = currentVersion.trimStart('v', 'V')
             val hasUpdate = apkUrl.isNotBlank() && compareVersions(latest, current) > 0
 
             UpdateInfo(tag.ifBlank { "v?" }, notes, apkUrl, apkName, hasUpdate)
@@ -78,8 +71,8 @@ object AutoUpdateManager {
     }
 
     fun compareVersions(a: String, b: String): Int {
-        val pa = a.split('.').map { it.filter { c -> c.isDigit() }.toIntOrNull() ?: 0 }
-        val pb = b.split('.').map { it.filter { c -> c.isDigit() }.toIntOrNull() ?: 0 }
+        val pa = a.split('.').map { s -> s.filter { it.isDigit() }.toIntOrNull() ?: 0 }
+        val pb = b.split('.').map { s -> s.filter { it.isDigit() }.toIntOrNull() ?: 0 }
         val n = maxOf(pa.size, pb.size)
         for (i in 0 until n) {
             val x = pa.getOrElse(i) { 0 }

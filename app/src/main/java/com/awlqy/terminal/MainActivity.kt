@@ -1,5 +1,6 @@
 package com.awlqy.terminal
 
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
@@ -12,8 +13,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.awlqy.terminal.core.ArabicShaper
 import com.awlqy.terminal.core.ShellExecutor
+import com.awlqy.terminal.core.AutoUpdateManager
 import com.awlqy.terminal.databinding.ActivityMainBinding
-import com.awlqy.terminal.update.AutoUpdateManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,7 +29,22 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val buffer = StringBuilder()
     private val timeFmt = SimpleDateFormat("HH:mm:ss", Locale.US)
-    private var busy = false
+    @Volatile private var busy = false
+
+    private val appVersionName: String by lazy {
+        try {
+            val pi: PackageManager = packageManager
+            val pkg = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                pi.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0L))
+            } else {
+                @Suppress("DEPRECATION")
+                pi.getPackageInfo(packageName, 0)
+            }
+            pkg.versionName ?: "1.0.0"
+        } catch (_: Exception) {
+            "1.0.0"
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,7 +76,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun printBanner() {
         appendLine("==========================================")
-        appendLine("  awlqy Terminal & IDE  v${BuildConfig.VERSION_NAME}")
+        appendLine("  awlqy Terminal & IDE  v$appVersionName")
         appendLine("  المطوّر: حسين الخلاقي")
         appendLine("==========================================")
         appendLine("")
@@ -144,11 +160,10 @@ class MainActivity : AppCompatActivity() {
     private fun showSettings() {
         val msg = buildString {
             appendLine("التطبيق: awlqy Terminal & IDE")
-            appendLine("الإصدار: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
+            appendLine("الإصدار: $appVersionName")
             appendLine("المطوّر: حسين الخلاقي")
             appendLine("GitHub: alwaqyhsyn752-eng")
             appendLine("الحالة: Active · Auto-Healing Ready")
-            appendLine("نوع البناء: ${BuildConfig.BUILD_TYPE}")
             appendLine("Package: $packageName")
         }
         MaterialAlertDialogBuilder(this)
@@ -175,10 +190,10 @@ class MainActivity : AppCompatActivity() {
 
     private suspend fun silentUpdateCheck() {
         val info = withContext(Dispatchers.IO) {
-            AutoUpdateManager.checkLatest(this@MainActivity)
+            AutoUpdateManager.checkLatest(this@MainActivity, appVersionName)
         }
         if (info != null && info.hasUpdate) {
-            appendLine("[update] إصدار جديد متوفر: ${info.tag} — من القائمة افتح (تحقق من التحديثات).")
+            appendLine("[update] إصدار جديد متوفر: ${info.tag} — افتح القائمة → التحقق من التحديثات.")
         }
     }
 
@@ -186,14 +201,14 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             appendLine("[update] جاري التحقق من GitHub Releases...")
             val info = withContext(Dispatchers.IO) {
-                AutoUpdateManager.checkLatest(this@MainActivity)
+                AutoUpdateManager.checkLatest(this@MainActivity, appVersionName)
             }
             if (info == null) {
                 appendLine("[update] تعذر الاتصال بـ GitHub.")
                 return@launch
             }
             if (!info.hasUpdate) {
-                appendLine("[update] أنت على أحدث إصدار (${BuildConfig.VERSION_NAME}).")
+                appendLine("[update] أنت على أحدث إصدار ($appVersionName).")
                 return@launch
             }
             appendLine("[update] إصدار جديد: ${info.tag}")
@@ -211,7 +226,7 @@ class MainActivity : AppCompatActivity() {
             appendLine("[update] جاري التنزيل: ${info.apkName}")
             val apk = withContext(Dispatchers.IO) {
                 AutoUpdateManager.downloadApk(this@MainActivity, info) { pct ->
-                    if (pct % 25 == 0) {
+                    if (pct in intArrayOf(25, 50, 75, 100)) {
                         runOnUiThread { appendLine("[update] ... $pct%") }
                     }
                 }
