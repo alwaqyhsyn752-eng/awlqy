@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="#0A0E14"
+        app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
+        app:title="IDE"
+        app:titleTextColor="#22D3EE"
+        app:subtitleTextColor="#64748B"/>
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#0A0E14"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="4dp">
+
+            <Button android:id="@+id/btnNew"  style="@style/KeyGlass" android:text="جديد"/>
+            <Button android:id="@+id/btnOpen" style="@style/KeyGlass" android:text="فتح"/>
+            <Button android:id="@+id/btnSave" style="@style/KeyGlass" android:text="حفظ"/>
+            <Button android:id="@+id/btnFind" style="@style/KeyGlass" android:text="بحث"/>
+            <Button android:id="@+id/btnRun"  style="@style/KeyGlass" android:text="تشغيل"/>
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <HorizontalScrollView
+        android:id="@+id/editorScroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#000000"
+        android:scrollbars="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/lineNumbers"
+                android:layout_width="48dp"
+                android:layout_height="wrap_content"
+                android:background="#050505"
+                android:orientation="vertical"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"/>
+
+            <EditText
+                android:id="@+id/editorInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#000000"
+                android:fontFamily="monospace"
+                android:gravity="top|start"
+                android:inputType="textMultiLine|textNoSuggestions"
+                android:minLines="20"
+                android:padding="8dp"
+                android:textColor="#E2E8F0"
+                android:textColorHint="#334155"
+                android:textSize="13sp"/>
+        </LinearLayout>
+    </HorizontalScrollView>
+</LinearLayout>

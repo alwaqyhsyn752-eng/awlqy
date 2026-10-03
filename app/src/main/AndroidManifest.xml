@@ -4,18 +4,17 @@
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28"
-        tools:ignore="ScopedStorage"/>
+        android:maxSdkVersion="28" tools:ignore="ScopedStorage"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
     <application
         android:name=".AwlqyApp"
@@ -42,6 +41,18 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".CodeEditorActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize"
+            android:label="awlqy IDE"/>
+
+        <service
+            android:name=".service.TerminalService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"/>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -52,11 +63,6 @@
                 android:resource="@xml/file_paths"/>
         </provider>
 
-        <meta-data
-            android:name="com.awlqy.DEVELOPER"
-            android:value="حسين الخلاقي"/>
-        <meta-data
-            android:name="com.awlqy.GITHUB"
-            android:value="alwaqyhsyn752-eng"/>
+        <meta-data android:name="com.awlqy.DEVELOPER" android:value="حسين الخلاقي"/>
     </application>
 </manifest>

@@ -1,24 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item
-        android:id="@+id/action_apk_tools"
-        android:title="@string/menu_apk_tools"
-        app:showAsAction="never"/>
-    <item
-        android:id="@+id/action_automation"
-        android:title="@string/menu_automation"
-        app:showAsAction="never"/>
-    <item
-        android:id="@+id/action_update"
-        android:title="@string/menu_update"
-        app:showAsAction="never"/>
-    <item
-        android:id="@+id/action_settings"
-        android:title="@string/menu_settings"
-        app:showAsAction="never"/>
-    <item
-        android:id="@+id/action_about"
-        android:title="@string/menu_about"
-        app:showAsAction="never"/>
+    <item android:id="@+id/action_new_session"   android:title="جلسة جديدة"        app:showAsAction="never"/>
+    <item android:id="@+id/action_close_session" android:title="إغلاق الجلسة"      app:showAsAction="never"/>
+    <item android:id="@+id/action_open_editor"   android:title="محرر الكود"        app:showAsAction="never"/>
+    <item android:id="@+id/action_install_hub"   android:title="مركز الأدوات"      app:showAsAction="never"/>
+    <item android:id="@+id/action_update"        android:title="التحقق من التحديثات" app:showAsAction="never"/>
+    <item android:id="@+id/action_settings"      android:title="الإعدادات"         app:showAsAction="never"/>
+    <item android:id="@+id/action_about"         android:title="حول التطبيق"       app:showAsAction="never"/>
 </menu>

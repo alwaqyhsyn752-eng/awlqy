@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/awlqy_bg"
+    android:background="#000000"
     android:orientation="vertical"
     android:fitsSystemWindows="true">
 
@@ -11,35 +11,52 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/awlqy_surface"
-        app:title="@string/app_name"
-        app:titleTextColor="@color/awlqy_accent"/>
+        android:background="#000000"
+        app:title="awlqy"
+        app:titleTextColor="#22D3EE"/>
 
-    <ScrollView
-        android:id="@+id/consoleScroll"
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabBar"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="#0A0E14"
+        app:tabIndicatorColor="#22D3EE"
+        app:tabSelectedTextColor="#22D3EE"
+        app:tabTextColor="#64748B"
+        app:tabMode="scrollable"/>
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@color/awlqy_terminal_bg"
-        android:fillViewport="true"
-        android:padding="8dp"
-        android:scrollbars="vertical">
+        android:background="#000000">
 
         <TextView
-            android:id="@+id/consoleText"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:alpha="0.05"
             android:fontFamily="monospace"
-            android:text=""
-            android:textColor="@color/awlqy_terminal_text"
-            android:textIsSelectable="true"
-            android:textSize="12sp"/>
-    </ScrollView>
+            android:gravity="center"
+            android:letterSpacing="0.25"
+            android:shadowColor="#22D3EE"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="30"
+            android:text="Q · W"
+            android:textColor="#22D3EE"
+            android:textSize="120sp"
+            android:textStyle="bold"/>
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </FrameLayout>
 
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/awlqy_surface"
+        android:background="#0A0E14"
         android:scrollbars="none">
 
         <LinearLayout
@@ -48,67 +65,67 @@
             android:orientation="horizontal"
             android:padding="4dp">
 
-            <Button
-                android:id="@+id/btnCtrlC"
-                style="@style/KeyButton"
-                android:text="Ctrl+C"/>
-
-            <Button
-                android:id="@+id/btnTab"
-                style="@style/KeyButton"
-                android:text="TAB"/>
-
-            <Button
-                android:id="@+id/btnEsc"
-                style="@style/KeyButton"
-                android:text="ESC"/>
-
-            <Button
-                android:id="@+id/btnUp"
-                style="@style/KeyButton"
-                android:text="↑"/>
-
-            <Button
-                android:id="@+id/btnDown"
-                style="@style/KeyButton"
-                android:text="↓"/>
-
-            <Button
-                android:id="@+id/clearButton"
-                style="@style/KeyButton"
-                android:text="@string/action_clear"/>
+            <Button android:id="@+id/keyNewSession" style="@style/KeyGlass" android:text="+ NEW"/>
+            <Button android:id="@+id/keyKeyboard"   style="@style/KeyGlass" android:text="⌨"/>
+            <Button android:id="@+id/keyCtrl"       style="@style/KeyGlass" android:text="CTRL+C"/>
+            <Button android:id="@+id/keyAlt"        style="@style/KeyGlass" android:text="ALT"/>
+            <Button android:id="@+id/keyTab"        style="@style/KeyGlass" android:text="TAB"/>
+            <Button android:id="@+id/keyEsc"        style="@style/KeyGlass" android:text="ESC"/>
+            <Button android:id="@+id/keyDollar"     style="@style/KeyGlass" android:text="$"/>
+            <Button android:id="@+id/keySlash"      style="@style/KeyGlass" android:text="/"/>
+            <Button android:id="@+id/keyPipe"       style="@style/KeyGlass" android:text="|"/>
+            <Button android:id="@+id/keyTilde"      style="@style/KeyGlass" android:text="~"/>
+            <Button android:id="@+id/keyUnderscore" style="@style/KeyGlass" android:text="_"/>
+            <Button android:id="@+id/keyUp"         style="@style/KeyGlass" android:text="↑"/>
+            <Button android:id="@+id/keyDown"       style="@style/KeyGlass" android:text="↓"/>
+            <Button android:id="@+id/keyLeft"       style="@style/KeyGlass" android:text="←"/>
+            <Button android:id="@+id/keyRight"      style="@style/KeyGlass" android:text="→"/>
+            <Button android:id="@+id/keyEditor"     style="@style/KeyGlass" android:text="IDE"/>
         </LinearLayout>
     </HorizontalScrollView>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/awlqy_surface"
+        android:background="#0A0E14"
         android:orientation="horizontal"
         android:padding="6dp">
+
+        <TextView
+            android:id="@+id/promptLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:fontFamily="monospace"
+            android:gravity="center_vertical"
+            android:paddingEnd="6dp"
+            android:text="awlqy@android:~$ "
+            android:textColor="#4ADE80"
+            android:textSize="12sp"/>
 
         <EditText
             android:id="@+id/inputEdit"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@color/awlqy_glass"
-            android:hint="@string/hint_command"
+            android:background="#1E293B"
+            android:fontFamily="monospace"
+            android:hint="اكتب أمراً…"
             android:imeOptions="actionSend|flagNoFullscreen"
             android:inputType="text|textNoSuggestions|textVisiblePassword|textMultiLine"
             android:maxLines="3"
             android:padding="10dp"
-            android:textColor="@color/awlqy_terminal_text"
-            android:textColorHint="@color/awlqy_text_dim"
-            android:textDirection="locale"/>
+            android:textColor="#E2E8F0"
+            android:textColorHint="#64748B"
+            android:textSize="12sp"/>
 
         <Button
             android:id="@+id/runButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:backgroundTint="@color/awlqy_accent"
-            android:text="@string/action_run"
-            android:textColor="@color/awlqy_bg"/>
+            android:layout_marginStart="6dp"
+            android:backgroundTint="#22D3EE"
+            android:fontFamily="monospace"
+            android:text="RUN"
+            android:textColor="#000000"/>
     </LinearLayout>
 </LinearLayout>
