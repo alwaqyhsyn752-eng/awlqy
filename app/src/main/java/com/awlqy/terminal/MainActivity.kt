@@ -1,4 +1,4 @@
-package com.awlqy.terminal
+ackage com.awlqy.terminal
 
 import android.content.pm.PackageManager
 import android.os.Build
@@ -11,9 +11,8 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.awlqy.terminal.core.ArabicShaper
-import com.awlqy.terminal.core.ShellExecutor
 import com.awlqy.terminal.core.AutoUpdateManager
+import com.awlqy.terminal.core.ShellExecutor
 import com.awlqy.terminal.databinding.ActivityMainBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
@@ -29,18 +28,22 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val buffer = StringBuilder()
     private val timeFmt = SimpleDateFormat("HH:mm:ss", Locale.US)
+
     @Volatile private var busy = false
+
+    private val history = ArrayList<String>()
+    private var historyIndex = -1
 
     private val appVersionName: String by lazy {
         try {
             val pi: PackageManager = packageManager
-            val pkg = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 pi.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0L))
             } else {
                 @Suppress("DEPRECATION")
                 pi.getPackageInfo(packageName, 0)
             }
-            pkg.versionName ?: "1.0.0"
+            info.versionName ?: "1.0.0"
         } catch (_: Exception) {
             "1.0.0"
         }
@@ -58,11 +61,8 @@ class MainActivity : AppCompatActivity() {
         printSystemStatus()
 
         binding.runButton.setOnClickListener { runCommand() }
-        binding.clearButton.setOnClickListener {
-            buffer.setLength(0)
-            binding.consoleText.text = ""
-            printSystemStatus()
-        }
+        binding.clearButton.setOnClickListener { clearConsole() }
+
         binding.inputEdit.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEND ||
                 actionId == EditorInfo.IME_ACTION_DONE) {
@@ -71,8 +71,16 @@ class MainActivity : AppCompatActivity() {
             } else false
         }
 
+        binding.btnCtrlC.setOnClickListener { handleCtrlC() }
+        binding.btnTab.setOnClickListener   { insertIntoInput("\t") }
+        binding.btnEsc.setOnClickListener   { binding.inputEdit.setText("") }
+        binding.btnUp.setOnClickListener    { navigateHistory(-1) }
+        binding.btnDown.setOnClickListener  { navigateHistory(+1) }
+
         lifecycleScope.launch { silentUpdateCheck() }
     }
+
+    // ─── Banner / Status ─────────────────────────────────
 
     private fun printBanner() {
         appendLine("==========================================")
@@ -89,20 +97,27 @@ class MainActivity : AppCompatActivity() {
         val abi = Build.SUPPORTED_ABIS.firstOrNull() ?: "?"
         appendLine("[system] API: ${Build.VERSION.SDK_INT} · ABI: $abi")
         appendLine("[system] اكتب أمراً ثم اضغط تشغيل.")
+        appendLine("[system] جرّب: ls · pwd · id · echo hello · date")
         appendLine("")
     }
 
+    private fun clearConsole() {
+        buffer.setLength(0)
+        binding.consoleText.text = ""
+        printSystemStatus()
+    }
+
+    // ─── Buffer ──────────────────────────────────────────
+
     private fun appendLine(line: String) {
-        val shaped = ArabicShaper.shape(line)
-        buffer.append(shaped).append('\n')
+        buffer.append(line).append('\n')
         render()
     }
 
     private fun appendRaw(text: String) {
         if (text.isEmpty()) return
-        val shaped = ArabicShaper.shape(text)
-        buffer.append(shaped)
-        if (!shaped.endsWith('\n')) buffer.append('\n')
+        buffer.append(text)
+        if (!text.endsWith('\n')) buffer.append('\n')
         render()
     }
 
@@ -113,14 +128,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ─── Execution ───────────────────────────────────────
+
     private fun runCommand() {
         if (busy) {
-            Toast.makeText(this, "أمر قيد التنفيذ...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "أمر قيد التنفيذ… (Ctrl+C للإلغاء)", Toast.LENGTH_SHORT).show()
             return
         }
         val cmd = binding.inputEdit.text.toString().trim()
         if (cmd.isEmpty()) return
         binding.inputEdit.setText("")
+
+        if (history.isEmpty() || history.last() != cmd) {
+            history.add(cmd)
+            if (history.size > 200) history.removeAt(0)
+        }
+        historyIndex = -1
 
         val ts = timeFmt.format(Date())
         appendLine("--- [$ts] \$ $cmd")
@@ -130,11 +153,15 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val home = File(filesDir, "home").apply { mkdirs() }
             val result = ShellExecutor.run(cmd, home)
+
             if (result.stdout.isNotBlank()) appendRaw(result.stdout)
             if (result.stderr.isNotBlank()) appendRaw("[stderr]\n" + result.stderr)
 
             val diag = ShellExecutor.diagnose(result.stderr, result.stdout)
-            if (diag != null) appendLine("[auto-heal] $diag")
+            if (diag != null) appendLine("[auto-heal] ⚕ $diag")
+
+            val fix = ShellExecutor.autoHealCommand(result.stderr, result.stdout)
+            if (fix != null) appendLine("[auto-fix]  » $fix")
 
             appendLine("--- exit=${result.exitCode} · ${result.durationMs}ms")
             appendLine("")
@@ -142,6 +169,38 @@ class MainActivity : AppCompatActivity() {
             binding.runButton.isEnabled = true
         }
     }
+
+    private fun handleCtrlC() {
+        if (busy) {
+            val ok = ShellExecutor.killCurrent()
+            appendLine("^C" + if (ok) " (signal sent)" else " (no active process)")
+            busy = false
+            binding.runButton.isEnabled = true
+        } else {
+            binding.inputEdit.setText("")
+        }
+    }
+
+    // ─── Input helpers ───────────────────────────────────
+
+    private fun insertIntoInput(s: String) {
+        val cur = binding.inputEdit.text?.toString().orEmpty()
+        val sel = binding.inputEdit.selectionStart.coerceAtLeast(0)
+        val next = cur.substring(0, sel) + s + cur.substring(sel)
+        binding.inputEdit.setText(next)
+        binding.inputEdit.setSelection(sel + s.length)
+    }
+
+    private fun navigateHistory(direction: Int) {
+        if (history.isEmpty()) return
+        if (historyIndex == -1) historyIndex = history.size
+        historyIndex = (historyIndex + direction).coerceIn(0, history.size)
+        val cmd = if (historyIndex >= history.size) "" else history[historyIndex]
+        binding.inputEdit.setText(cmd)
+        binding.inputEdit.setSelection(cmd.length)
+    }
+
+    // ─── Menu ────────────────────────────────────────────
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
@@ -165,28 +224,30 @@ class MainActivity : AppCompatActivity() {
             appendLine("GitHub: alwaqyhsyn752-eng")
             appendLine("الحالة: Active · Auto-Healing Ready")
             appendLine("Package: $packageName")
+            appendLine("عدد الأوامر في السجل: ${history.size}")
         }
         MaterialAlertDialogBuilder(this)
             .setTitle("الإعدادات")
-            .setMessage(ArabicShaper.shape(msg))
+            .setMessage(msg)
             .setPositiveButton("حسناً", null)
             .setNeutralButton("التحقق من التحديثات") { _, _ -> checkUpdatesManually() }
             .show()
     }
 
     private fun showAbout() {
-        val msg = buildString {
-            appendLine("awlqy — طرفية ذكية وبيئة تطوير متكاملة.")
-            appendLine("مبنية بـ Kotlin + Android Runtime.")
-            appendLine("© 2025 حسين الخلاقي")
-            appendLine("رخصة MIT")
-        }
         MaterialAlertDialogBuilder(this)
             .setTitle("حول التطبيق")
-            .setMessage(ArabicShaper.shape(msg))
+            .setMessage(
+                "awlqy — طرفية ذكية وبيئة تطوير متكاملة.\n" +
+                "مبنية بـ Kotlin + Android Runtime.\n" +
+                "© 2025 حسين الخلاقي\n" +
+                "رخصة MIT"
+            )
             .setPositiveButton("إغلاق", null)
             .show()
     }
+
+    // ─── Auto-update ─────────────────────────────────────
 
     private suspend fun silentUpdateCheck() {
         val info = withContext(Dispatchers.IO) {
@@ -214,7 +275,7 @@ class MainActivity : AppCompatActivity() {
             appendLine("[update] إصدار جديد: ${info.tag}")
             MaterialAlertDialogBuilder(this@MainActivity)
                 .setTitle("تحديث متوفر: ${info.tag}")
-                .setMessage(ArabicShaper.shape(info.notes.ifBlank { "لا توجد ملاحظات." }))
+                .setMessage(info.notes.ifBlank { "لا توجد ملاحظات." })
                 .setPositiveButton("تحديث الآن") { _, _ -> downloadAndInstall(info) }
                 .setNegativeButton("لاحقاً", null)
                 .show()

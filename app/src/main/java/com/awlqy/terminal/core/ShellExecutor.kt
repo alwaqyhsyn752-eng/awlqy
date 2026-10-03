@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
+import java.util.concurrent.atomic.AtomicReference
 
 data class ShellResult(
     val exitCode: Int,
@@ -18,6 +19,17 @@ data class ShellResult(
 object ShellExecutor {
 
     private const val SHELL = "/system/bin/sh"
+    private val currentProc = AtomicReference<Process?>(null)
+
+    fun killCurrent(): Boolean {
+        val p = currentProc.get() ?: return false
+        return try {
+            p.destroy()
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
 
     suspend fun run(
         command: String,
@@ -28,6 +40,7 @@ object ShellExecutor {
         var exit = -1
         val out = StringBuilder()
         val err = StringBuilder()
+        var proc: Process? = null
         try {
             if (!workDir.exists()) workDir.mkdirs()
             val pb = ProcessBuilder(SHELL, "-c", command)
@@ -41,8 +54,10 @@ object ShellExecutor {
             env["PATH"] = "/data/data/com.awlqy.terminal/files/usr/bin:/system/bin:/system/xbin"
             env.putAll(extraEnv)
 
-            val p = pb.start()
+            proc = pb.start()
+            currentProc.set(proc)
 
+            val p = proc
             val tOut = Thread {
                 try {
                     BufferedReader(InputStreamReader(p.inputStream)).use { r ->
@@ -67,10 +82,13 @@ object ShellExecutor {
             }
             tOut.start(); tErr.start()
             exit = p.waitFor()
-            tOut.join(3000)
-            tErr.join(3000)
+            tOut.join(2000)
+            tErr.join(2000)
         } catch (e: Exception) {
             err.append(e.message ?: e.javaClass.simpleName).append('\n')
+        } finally {
+            currentProc.set(null)
+            try { proc?.destroy() } catch (_: Exception) { }
         }
         ShellResult(exit, out.toString(), err.toString(), System.currentTimeMillis() - start)
     }
@@ -80,13 +98,13 @@ object ShellExecutor {
         if (s.isBlank()) return null
 
         Regex("ModuleNotFoundError: No module named '([^']+)'").find(s)?.let {
-            return "مكتبة Python مفقودة '${it.groupValues[1]}'. جرّب: pip install ${it.groupValues[1]}"
+            return "مكتبة Python مفقودة '${it.groupValues[1]}'."
         }
         Regex("ImportError: cannot import name '([^']+)'").find(s)?.let {
             return "استيراد فاشل لـ '${it.groupValues[1]}'. تحقق من التثبيت."
         }
         Regex("Cannot find module '([^']+)'").find(s)?.let {
-            return "حزمة Node.js مفقودة '${it.groupValues[1]}'. جرّب: npm install ${it.groupValues[1]}"
+            return "حزمة Node.js مفقودة '${it.groupValues[1]}'."
         }
         if (s.contains("command not found") || s.contains(": not found")) {
             return "الأمر غير مثبت أو غير موجود في PATH. تحقق من الاسم."
@@ -101,13 +119,27 @@ object ShellExecutor {
             return "خطأ بنيوي. تحقق من علامات الاقتباس، الأقواس، والمسافات البادئة."
         }
         if (s.contains("is a directory")) {
-            return "هذا مسار مجلد، ليس ملفاً. استخدم ls."
+            return "هذا مسار مجلد، ليس ملفاً. استخدم ls لعرض المحتوى."
         }
         if (s.contains("No space left on device")) {
             return "المساحة ممتلئة. احذف ملفات غير ضرورية."
         }
         if (s.contains("Cannot resolve host") || s.contains("Could not resolve host")) {
             return "تعذر الاتصال بالشبكة. تحقق من الإنترنت."
+        }
+        return null
+    }
+
+    fun autoHealCommand(stderr: String, stdout: String): String? {
+        val s = "$stderr\n$stdout"
+        Regex("ModuleNotFoundError: No module named '([^']+)'").find(s)?.let {
+            return "python -m pip install ${it.groupValues[1]}"
+        }
+        Regex("Cannot find module '([^']+)'").find(s)?.let {
+            return "npm install ${it.groupValues[1]}"
+        }
+        if (s.contains("Permission denied")) {
+            return "chmod +x <file> ثم أعد التشغيل"
         }
         return null
     }

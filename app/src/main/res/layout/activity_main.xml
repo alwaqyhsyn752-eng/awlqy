@@ -36,6 +36,50 @@
             android:textSize="12sp"/>
     </ScrollView>
 
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/awlqy_surface"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="4dp">
+
+            <Button
+                android:id="@+id/btnCtrlC"
+                style="@style/KeyButton"
+                android:text="Ctrl+C"/>
+
+            <Button
+                android:id="@+id/btnTab"
+                style="@style/KeyButton"
+                android:text="TAB"/>
+
+            <Button
+                android:id="@+id/btnEsc"
+                style="@style/KeyButton"
+                android:text="ESC"/>
+
+            <Button
+                android:id="@+id/btnUp"
+                style="@style/KeyButton"
+                android:text="↑"/>
+
+            <Button
+                android:id="@+id/btnDown"
+                style="@style/KeyButton"
+                android:text="↓"/>
+
+            <Button
+                android:id="@+id/clearButton"
+                style="@style/KeyButton"
+                android:text="@string/action_clear"/>
+        </LinearLayout>
+    </HorizontalScrollView>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -57,15 +101,6 @@
             android:textColor="@color/awlqy_terminal_text"
             android:textColorHint="@color/awlqy_text_dim"
             android:textDirection="locale"/>
-
-        <Button
-            android:id="@+id/clearButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:backgroundTint="@color/awlqy_glass"
-            android:text="@string/action_clear"
-            android:textColor="@color/awlqy_text"/>
 
         <Button
             android:id="@+id/runButton"
