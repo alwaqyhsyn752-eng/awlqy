@@ -1,3 +1,17 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# ─────────────────────────────────────────────────────────────
+#  awlqy · clean-build-gradle.sh
+#  إعادة كتابة app/build.gradle.kts نظيف
+# ─────────────────────────────────────────────────────────────
+set -euo pipefail
+cd "$(dirname "$0")"
+
+echo "▶ [clean-gradle] نسخة احتياطية"
+cp -f app/build.gradle.kts app/build.gradle.kts.bak 2>/dev/null || true
+
+echo "▶ [clean-gradle] كتابة الملف النظيف"
+
+cat > app/build.gradle.kts <<'GRADLE_EOF'
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -84,3 +98,40 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("com.jakewharton.timber:timber:5.0.1")
 }
+GRADLE_EOF
+
+echo "▶ [clean-gradle] التحقق"
+
+# عدد مرات ظهور kotlinOptions و buildFeatures يجب أن يكون 1
+KO=$(grep -c "kotlinOptions" app/build.gradle.kts)
+BF=$(grep -c "buildFeatures" app/build.gradle.kts)
+PK=$(grep -c "packaging" app/build.gradle.kts)
+
+echo "  kotlinOptions : $KO  (يجب 1)"
+echo "  buildFeatures : $BF  (يجب 1)"
+echo "  packaging     : $PK  (يجب 1)"
+
+# التحقق من توازن الأقواس
+OPEN=$(grep -o "{" app/build.gradle.kts | wc -l)
+CLOSE=$(grep -o "}" app/build.gradle.kts | wc -l)
+echo "  '{' = $OPEN  '}' = $CLOSE"
+
+if [ "$KO" != "1" ] || [ "$BF" != "1" ] || [ "$OPEN" != "$CLOSE" ]; then
+    echo "⚠ هناك خلل — راجع الملف يدوياً"
+    exit 1
+fi
+
+echo ""
+echo "▶ [clean-gradle] فحص أن الملف بدأ بـ plugins:"
+head -n 3 app/build.gradle.kts
+
+echo ""
+echo "▶ [clean-gradle] قائمة التبعيات:"
+grep "implementation(" app/build.gradle.kts
+
+echo ""
+echo "✔ [clean-gradle] انتهى."
+echo ""
+echo "   git add -A"
+echo "   git commit -m 'fix: clean app/build.gradle.kts for PTY build'"
+echo "   git push"
