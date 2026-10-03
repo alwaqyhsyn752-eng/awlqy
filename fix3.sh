@@ -1,3 +1,13 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# ─────────────────────────────────────────────────────────────
+#  awlqy · fix3.sh — إزالة HAVE_CONFIG_H من بناء FriBidi
+# ─────────────────────────────────────────────────────────────
+set -euo pipefail
+cd "$(dirname "$0")"
+
+echo "▶ [fix3] إعادة كتابة CMakeLists.txt بدون HAVE_CONFIG_H"
+
+cat > app/src/main/cpp/CMakeLists.txt <<'AWLQY_CMAKE_EOF'
 cmake_minimum_required(VERSION 3.22.1)
 project(awlqy LANGUAGES C CXX)
 
@@ -77,3 +87,16 @@ target_link_libraries(awlqy_engine
 
 target_compile_options(awlqy_engine PRIVATE
     -O2 -fvisibility=hidden -ffunction-sections -fdata-sections)
+AWLQY_CMAKE_EOF
+
+echo "▶ [fix3] تنظيف .cxx cache القديم (محلياً)"
+rm -rf app/.cxx 2>/dev/null || true
+
+echo "▶ [fix3] التحقق"
+grep -n "HAVE_CONFIG_H" app/src/main/cpp/CMakeLists.txt && echo "⚠ لا يزال موجود!" || echo "✔ نظيف تماماً"
+
+echo ""
+echo "الخطوة التالية:"
+echo "  git add ."
+echo "  git commit -m 'fix: remove HAVE_CONFIG_H to avoid missing config.h'"
+echo "  git push"
