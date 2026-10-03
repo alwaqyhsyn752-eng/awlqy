@@ -18,18 +18,22 @@ android {
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
-
-        externalNativeBuild {
-            cmake {
-                cppFlags += "-std=c17 -O2"
-            }
-        }
     }
 
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
+    val cmakeFile = file("src/main/cpp/CMakeLists.txt")
+    if (cmakeFile.exists()) {
+        externalNativeBuild {
+            cmake {
+                path = cmakeFile
+                version = "3.22.1"
+            }
+        }
+        defaultConfig {
+            externalNativeBuild {
+                cmake {
+                    cppFlags += "-O2"
+                }
+            }
         }
     }
 
@@ -53,15 +57,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
-    buildFeatures {
-        viewBinding = true
-        buildConfig = true
-    }
+    kotlinOptions { jvmTarget = "17" }
+    buildFeatures { viewBinding = true; buildConfig = true }
 
     packaging {
         resources {
