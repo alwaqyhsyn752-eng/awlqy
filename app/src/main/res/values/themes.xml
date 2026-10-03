@@ -6,7 +6,7 @@
         <item name="colorSurface">@color/awlqy_surface</item>
         <item name="colorOnSurface">@color/awlqy_text</item>
         <item name="android:colorBackground">@color/awlqy_bg</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:statusBarColor">@color/awlqy_surface</item>
         <item name="android:navigationBarColor">@color/awlqy_bg</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
