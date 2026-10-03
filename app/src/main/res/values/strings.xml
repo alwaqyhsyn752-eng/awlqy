@@ -14,4 +14,6 @@
     <string name="menu_update">التحقق من التحديثات</string>
     <string name="menu_settings">الإعدادات</string>
     <string name="menu_about">حول التطبيق</string>
+    <string name="menu_apk_tools">أدوات APK</string>
+    <string name="menu_automation">الأتمتة</string>
 </resources>

@@ -11,7 +11,10 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.awlqy.terminal.core.ApkBuilderEngine
+import com.awlqy.terminal.core.AutoHealingEngine
 import com.awlqy.terminal.core.AutoUpdateManager
+import com.awlqy.terminal.core.AutomationManager
 import com.awlqy.terminal.core.ShellExecutor
 import com.awlqy.terminal.databinding.ActivityMainBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -33,6 +36,8 @@ class MainActivity : AppCompatActivity() {
 
     private val history = ArrayList<String>()
     private var historyIndex = -1
+
+    private val apkEngine by lazy { ApkBuilderEngine(applicationContext) }
 
     private val appVersionName: String by lazy {
         try {
@@ -84,6 +89,7 @@ class MainActivity : AppCompatActivity() {
         appendLine("==========================================")
         appendLine("  awlqy Terminal & IDE  v$appVersionName")
         appendLine("  المطوّر: حسين الخلاقي")
+        appendLine("  PHASE 4 · Fully Functional")
         appendLine("==========================================")
         appendLine("")
     }
@@ -91,11 +97,13 @@ class MainActivity : AppCompatActivity() {
     private fun printSystemStatus() {
         appendLine("[system] الاسم: awlqy Terminal & IDE")
         appendLine("[system] المطوّر: حسين الخلاقي")
-        appendLine("[system] الحالة: Active · Auto-Healing Ready")
+        appendLine("[system] الحالة: Phase 4 - Fully Functional / Auto-Healing Active")
         val abi = Build.SUPPORTED_ABIS.firstOrNull() ?: "?"
         appendLine("[system] API: ${Build.VERSION.SDK_INT} · ABI: $abi")
         appendLine("[system] اكتب أمراً ثم اضغط تشغيل.")
         appendLine("[system] جرّب: ls · pwd · id · echo hello · date")
+        appendLine("[system] أدوات APK: من القائمة → أدوات APK")
+        appendLine("[system] الأتمتة: من القائمة → الأتمتة")
         appendLine("")
     }
 
@@ -151,11 +159,16 @@ class MainActivity : AppCompatActivity() {
             if (result.stdout.isNotBlank()) appendRaw(result.stdout)
             if (result.stderr.isNotBlank()) appendRaw("[stderr]\n" + result.stderr)
 
-            val diag = ShellExecutor.diagnose(result.stderr, result.stdout)
-            if (diag != null) appendLine("[auto-heal] \u2695 $diag")
-
-            val fix = ShellExecutor.autoHealCommand(result.stderr, result.stdout)
-            if (fix != null) appendLine("[auto-fix]  \u00BB $fix")
+            val plan = AutoHealingEngine.analyze(result.exitCode, result.stdout, result.stderr)
+            if (plan != null) {
+                appendLine("[auto-heal] \u2695 ${plan.summary}")
+                if (plan.suggestion != null) {
+                    appendLine("[auto-heal]   ${plan.suggestion}")
+                }
+                if (plan.autoRetryCommand != null) {
+                    appendLine("[auto-fix]  \u00BB ${plan.autoRetryCommand}")
+                }
+            }
 
             appendLine("--- exit=${result.exitCode} · ${result.durationMs}ms")
             appendLine("")
@@ -200,12 +213,76 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.action_settings -> { showSettings(); true }
-            R.id.action_update   -> { checkUpdatesManually(); true }
-            R.id.action_about    -> { showAbout(); true }
+            R.id.action_apk_tools  -> { showApkToolsDialog(); true }
+            R.id.action_automation -> { showAutomationDialog(); true }
+            R.id.action_settings   -> { showSettings(); true }
+            R.id.action_update     -> { checkUpdatesManually(); true }
+            R.id.action_about      -> { showAbout(); true }
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+    // ─── APK Tools ───────────────────────────────────────
+
+    private fun showApkToolsDialog() {
+        val avail = apkEngine.availability()
+        val sb = StringBuilder()
+        sb.append("مسار الأدوات: ").append(apkEngine.toolsDir.absolutePath).append("\n\n")
+        for ((tool, ok) in avail) {
+            val mark = if (ok) "[✓]" else "[ ]"
+            sb.append(mark).append(' ').append(tool)
+                .append(" — ").append(apkEngine.describe(tool)).append('\n')
+        }
+        sb.append('\n').append("ثبّت الأدوات في المجلد أعلاه لتفعيلها.")
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("أدوات APK على الجهاز")
+            .setMessage(sb.toString())
+            .setPositiveButton("حسناً", null)
+            .setNeutralButton("عرض availability") { _, _ ->
+                appendLine("[apk-tools] متاح الآن: " +
+                    avail.filter { it.value }.keys.joinToString(", ").ifEmpty { "لا شيء" })
+                binding.consoleScroll.post {
+                    binding.consoleScroll.fullScroll(View.FOCUS_DOWN)
+                }
+            }
+            .show()
+    }
+
+    // ─── Automation ──────────────────────────────────────
+
+    private fun showAutomationDialog() {
+        val n = AutomationManager.size()
+        val msg = buildString {
+            appendLine("عدد الحسابات المسجّلة: $n")
+            appendLine("سجل العمليات: ${AutomationManager.history().size} عنصر")
+            appendLine()
+            appendLine("لتسجيل حساب برمجياً:")
+            appendLine("AutomationManager.register(")
+            appendLine("  Account(id, platform, token, endpoint)")
+            appendLine(")")
+            appendLine()
+            appendLine("إرسال: AutomationManager.post(id, payload)")
+            appendLine("إلى الكل: AutomationManager.postAll(payload)")
+            appendLine("Webhook: AutomationManager.webhook(url, payload)")
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle("مدير الأتمتة")
+            .setMessage(msg)
+            .setPositiveButton("حسناً", null)
+            .setNeutralButton("سجل العمليات") { _, _ ->
+                val h = AutomationManager.history()
+                if (h.isEmpty()) {
+                    appendLine("[automation] السجل فارغ.")
+                } else {
+                    appendLine("[automation] سجل العمليات:")
+                    for (line in h.takeLast(20)) appendLine("  $line")
+                }
+            }
+            .show()
+    }
+
+    // ─── Settings / About ────────────────────────────────
 
     private fun showSettings() {
         val msg = buildString {
@@ -213,9 +290,10 @@ class MainActivity : AppCompatActivity() {
             appendLine("الإصدار: $appVersionName")
             appendLine("المطوّر: حسين الخلاقي")
             appendLine("GitHub: alwaqyhsyn752-eng")
-            appendLine("الحالة: Active · Auto-Healing Ready")
+            appendLine("الحالة: Phase 4 - Fully Functional / Auto-Healing Active")
             appendLine("Package: $packageName")
-            appendLine("عدد الأوامر في السجل: ${history.size}")
+            appendLine("سجل الأوامر: ${history.size}")
+            appendLine("حسابات الأتمتة: ${AutomationManager.size()}")
         }
         MaterialAlertDialogBuilder(this)
             .setTitle("الإعدادات")
@@ -237,6 +315,8 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("إغلاق", null)
             .show()
     }
+
+    // ─── Auto-update ─────────────────────────────────────
 
     private suspend fun silentUpdateCheck() {
         val info = withContext(Dispatchers.IO) {

@@ -2,6 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/action_apk_tools"
+        android:title="@string/menu_apk_tools"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/action_automation"
+        android:title="@string/menu_automation"
+        app:showAsAction="never"/>
+    <item
         android:id="@+id/action_update"
         android:title="@string/menu_update"
         app:showAsAction="never"/>
